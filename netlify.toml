@@ -1,0 +1,31 @@
+# Configurazione Netlify per Voltaway.
+# Forward-looking: si attiva quando viene scaffoldata l'app web (apps/web),
+# come descritto in ARCHITECTURE.md. Finché l'app non esiste, il deploy va
+# configurato solo dopo lo scaffold.
+
+[build]
+  base = "apps/web"          # monorepo: la web app vive qui
+  command = "next build"     # Next.js è auto-rilevato dal runtime @netlify/next
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Job schedulato: chiusura sessioni idle + avvisi anti-penale (demo)
+[functions."close-idle-sessions"]
+  schedule = "@hourly"
+
+# Header di sicurezza di base (applicati ai contenuti serviti dalla CDN)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Nota: NON inserire segreti qui (il file è versionato).
+# Usa la UI/CLI Netlify per le variabili sensibili.
