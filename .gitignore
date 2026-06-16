@@ -21,11 +21,11 @@ out/
 .expo/
 *.tsbuildinfo
 
-# Netlify
-.netlify/
+# Drizzle local artifacts (le migrazioni versionate in packages/db NON vanno ignorate)
+.drizzle/
 
-# Drizzle local artifacts (migrations under netlify/database/migrations ARE tracked)
-drizzle/
+# Docker (volumi locali eventualmente montati su bind-mount)
+.docker-data/
 
 # Testing / coverage
 coverage/

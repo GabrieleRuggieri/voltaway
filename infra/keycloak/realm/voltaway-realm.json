@@ -1,0 +1,50 @@
+{
+  "realm": "voltaway",
+  "enabled": true,
+  "registrationAllowed": true,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "sslRequired": "none",
+  "roles": {
+    "realm": [
+      { "name": "driver", "description": "Guidatore EV (consumer)" },
+      { "name": "fleet_admin", "description": "Amministratore di flotta (B2B)" },
+      { "name": "admin", "description": "Amministratore piattaforma Voltaway" }
+    ]
+  },
+  "defaultRoles": ["driver"],
+  "groups": [
+    { "name": "fleets" }
+  ],
+  "clients": [
+    {
+      "clientId": "voltaway-web",
+      "name": "Voltaway Web/Mobile",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://app.voltaway.localhost/*",
+        "http://localhost:3000/*",
+        "voltaway://*"
+      ],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "voltaway-api",
+      "name": "Voltaway API (service account)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "voltaway-api-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "bearerOnly": false
+    }
+  ]
+}

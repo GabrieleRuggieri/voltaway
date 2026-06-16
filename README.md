@@ -2,14 +2,14 @@
 
 > Una sola app per trovare, avviare e pagare la ricarica su qualsiasi colonnina — di qualsiasi operatore, in qualsiasi Paese — con il **prezzo reale mostrato prima di attaccare il cavo**, esattamente come EasyPark ha fatto per il parcheggio.
 
-![Stato](https://img.shields.io/badge/stato-demo%20%2F%20MVP-orange)
+![Stato](https://img.shields.io/badge/stato-MVP-orange)
 ![Stack](https://img.shields.io/badge/stack-TypeScript-3178c6)
-![Deploy](https://img.shields.io/badge/deploy-Netlify-00c7b7)
+![Runtime](https://img.shields.io/badge/runtime-Docker%20Compose-2496ed)
 ![Licenza](https://img.shields.io/badge/licenza-proprietaria-lightgrey)
 
 Voltaway è un **e-Mobility Service Provider (eMSP)**: un livello software sopra le reti di ricarica altrui. Non possiede né colonnine né energia — aggrega gli operatori via roaming **OCPI** e vince sulla **trasparenza del prezzo** e sull'**affidabilità**.
 
-> **Nota su questa repo.** Questa è la **base iniziale completa ma in versione demo**: l'architettura è quella reale, ma tutte le integrazioni esterne (hub OCPI, CPO, PSP) sono **simulate dietro interfacce** perché non esistono ancora accordi commerciali. Vedi [`ARCHITECTURE.md`](./ARCHITECTURE.md) per i dettagli tecnici e [Scope della demo](#scope-della-demo-e-limiti-noti).
+> **Nota su questa repo.** Fase attuale: **documentazione + infrastruttura Docker** — lo sviluppo applicativo (`apps/*`) inizierà più avanti. Lo stack è quello di produzione, eseguibile in locale via **Docker Compose**; l'integrazione ricarica passa da **`ocpi-sim`** (OCPI simulato, nessun accordo CPO); i pagamenti da **Stripe test mode** (account e chiavi API gratuiti). Servizi esterni ammessi **solo se gratuiti** (es. tile OpenStreetMap). Dettagli in [`ARCHITECTURE.md`](./ARCHITECTURE.md) e [Politica sviluppo locale](#politica-sviluppo-locale).
 
 ## Indice
 
@@ -36,7 +36,7 @@ Voltaway è un **e-Mobility Service Provider (eMSP)**: un livello software sopra
 16. [Stack tecnologico](#stack-tecnologico)
 17. [Struttura del repository](#struttura-del-repository)
 18. [Avvio rapido](#avvio-rapido)
-19. [Scope della demo e limiti noti](#scope-della-demo-e-limiti-noti)
+19. [Politica sviluppo locale](#politica-sviluppo-locale)
 20. [Glossario](#glossario)
 21. [Licenza](#licenza)
 
@@ -98,7 +98,7 @@ Fonti: European Alternative Fuels Observatory (EAFO), ACEA (immatricolazioni), r
 
 **Nota chiave sui costi:** non si possiede hardware né energia — si è un livello software (eMSP) sopra le reti altrui. Il margine viene dal differenziale tra prezzo all'utente e prezzo di acquisto roaming, più una fee a sessione.
 
-> Il dettaglio tecnico completo dell'MVP (stack, moduli, modello dati, flussi) è in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+> Il dettaglio tecnico completo dell'MVP (stack, moduli, modello dati, flussi) è in [`ARCHITECTURE.md`](./ARCHITECTURE.md). Per i vincoli di sviluppo locale (Docker, costo zero, servizi esterni gratuiti) vedi [Politica sviluppo locale](#politica-sviluppo-locale).
 
 ## Concorrenza e posizionamento
 
@@ -191,62 +191,84 @@ La ricarica fuori casa è un bisogno **settimanale e obbligato** per chi non ha 
 
 Sintesi delle scelte. Razionale completo, diagrammi, modello dati e flussi in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
-| Livello | Tecnologia (demo) | Note |
+| Livello | Tecnologia | Note |
 |---|---|---|
-| Linguaggio | **TypeScript** ovunque | Tipi condivisi tra web, mobile e backend |
-| Web / API | **Next.js** (App Router) + React + Tailwind CSS + shadcn/ui | Landing, mappa pubblica «prezzo reale» (amo SEO), dashboard flotte |
-| Mobile | **Expo / React Native** (fase 2) | Condivide i package `core`/`api` con il web; nella demo l'app web è una PWA |
-| Mappa | **MapLibre GL** + tiles OpenStreetMap | Nessun accordo necessario per la demo |
-| Backend | **Netlify Functions** + domain layer disaccoppiato | Estraibile in servizio dedicato in produzione |
-| Database | **Netlify Database** (Postgres gestito) + **Drizzle ORM** | Migrazioni applicate dal deploy; branch per ogni preview |
-| Cache / realtime | **Netlify Blobs** (snapshot disponibilità) + SSE/polling | Redis + WebSocket in produzione |
-| Pagamenti | **Stripe** (test mode), PaymentIntents + SCA | Tokenizzazione carta, nessun PSP reale richiesto |
-| Auth | **Netlify Identity** (`@netlify/identity`) | RBAC per consumer/flotte/admin |
-| Integrazioni | **OCPI 2.2.1 connector — mock** dietro interfaccia | Hub/CPO simulati con dati seed |
-| Qualità / osservabilità | Vitest + Playwright, ESLint/Prettier, Sentry, SonarQube | CI su GitHub Actions |
-| Deploy | **Netlify** (Git deploy, preview per PR) | Vedi `netlify.toml` |
+| Linguaggio | **TypeScript** (strict) ovunque | tipi condivisi tra web, mobile, api, worker |
+| Web | **Next.js** (App Router) + React + Tailwind + shadcn/ui | landing, mappa, dashboard flotte — in container (profilo `app`) |
+| Mobile | **Expo / React Native** | *fase successiva* — fuori scope attuale; per ora solo web |
+| Mappa | **MapLibre GL** + tiles **OpenStreetMap** (servizio esterno gratuito) | nessun accordo né costo; richiede connessione internet |
+| API | **NestJS** (REST + WebSocket gateway) | backend always-on |
+| Worker | **NestJS standalone** + **BullMQ** (Redis) | sessioni long-running, CDR, sync, idle-fee |
+| Database | **PostgreSQL 16 + PostGIS** + **Drizzle ORM** | query geospaziali «vicino a me» |
+| Cache / realtime | **Redis 7** + **WebSocket** (Socket.IO) | pub/sub, coda, stato live |
+| Object storage | **MinIO** (S3-compatibile) | ricevute/asset → S3/GCS/R2 in prod |
+| Pagamenti | **Stripe test mode** (account + API key gratuiti) | nessun addebito reale, nessun contratto PSP; webhook via Stripe CLI (gratuita) |
+| Auth | **Keycloak** (OIDC/RBAC, self-hosted) | ruoli `driver`/`fleet_admin`/`admin` |
+| Integrazione ricarica | client **OCPI 2.2.1** + servizio **`ocpi-sim`** | CPO simulato che parla OCPI reale |
+| Gateway | **Traefik v3** | reverse proxy `*.voltaway.localhost` |
+| Qualità / osservabilità | Vitest + Playwright + Testcontainers, ESLint/Prettier, SonarQube, OpenTelemetry → Grafana, Sentry | CI su GitHub Actions |
+| Runtime | **Docker + Docker Compose** | infra in container; servizi esterni solo se gratuiti |
 
 ## Struttura del repository
 
-> Il repository contiene **attualmente** la documentazione di prodotto/architettura e la configurazione di base. Lo scaffold del codice applicativo è il passo successivo: la struttura target (monorepo) è documentata in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+> Il repository contiene **attualmente** la documentazione (`README.md`, `ARCHITECTURE.md`) e l'infrastruttura locale (`docker-compose.yml`, config `infra/`, `.env.example`). Lo scaffold del codice applicativo (`apps/*`) è il passo successivo: la struttura target (monorepo) è in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 ```text
 voltaway/
 ├── README.md            # Questo file — prodotto + indice tecnico
-├── ARCHITECTURE.md      # Stack, moduli, modello dati, flussi (demo → produzione)
-├── netlify.toml         # Configurazione build/deploy Netlify
+├── ARCHITECTURE.md      # Stack, moduli, modello dati, flussi, Docker
+├── docker-compose.yml   # Stack di produzione eseguibile in locale
 ├── .env.example         # Variabili d'ambiente di riferimento
+├── .dockerignore
+├── infra/               # Config piattaforma (realm Keycloak, ecc.)
 └── .gitignore
 ```
 
 ## Avvio rapido
 
-Prerequisiti: **Node.js 20+**, **npm** (o pnpm), **Netlify CLI** (`npm i -g netlify-cli`).
+Prerequisiti **ora**: solo **Docker** + **Docker Compose v2**.
+
+Quando inizierà lo sviluppo applicativo serviranno anche **Node.js 22 LTS**, **pnpm** e la **Stripe CLI** (tutte gratuite) per build locali e webhook Stripe in test mode.
 
 ```bash
-# 1. Clona il repository
-git clone <repo-url> voltaway && cd voltaway
-
-# 2. Copia le variabili d'ambiente e compilale (chiavi Stripe test, tiles, ecc.)
+# 1. Variabili d'ambiente (compila le chiavi Stripe test quando svilupperai l'app)
 cp .env.example .env
 
-# 3. (Prossimo passo) installa le dipendenze e avvia in locale
-#    Disponibile una volta scaffoldata l'app web descritta in ARCHITECTURE.md
-# npm install
-# netlify dev
+# 2. Infrastruttura — funziona GIÀ ORA, senza codice app
+docker compose up -d
+#    postgres, redis, keycloak, minio, mailpit, traefik
+
+# 3. Stack applicativo — dopo lo scaffold di apps/*
+docker compose --profile app up -d --build   # + api, worker, web, ocpi-sim
+
+# 4. Osservabilità (opzionale)
+docker compose --profile obs up -d
+
+# 5. Webhook Stripe (quando l'app esiste) — account Stripe gratuito + Stripe CLI
+stripe listen --forward-to http://api.voltaway.localhost/webhooks/stripe
 ```
 
-In modalità demo le integrazioni esterne sono simulate: l'app parte e mostra mappa, prezzi all-in e flusso di ricarica end-to-end **senza** credenziali OCPI/CPO reali.
+Console utili: Mailpit `http://mail.voltaway.localhost`, MinIO `http://minio.voltaway.localhost`, Keycloak `http://auth.voltaway.localhost`, Grafana `http://grafana.voltaway.localhost`.
 
-## Scope della demo e limiti noti
+## Politica sviluppo locale
 
-Questa base è **completa nell'architettura ma demo nell'esecuzione**, perché non esistono ancora accordi commerciali (CPO, hub OCPI, PSP). In concreto:
+Regole per questa fase (documentazione + infra, sviluppo app più avanti):
 
-- **OCPI / CPO simulati** — un `MockOcpiProvider` espone la stessa interfaccia di un connettore Hubject/Gireve reale, restituendo location, tariffe e sessioni da dati seed. Sostituire il mock con il connettore reale non cambia il resto del codice.
-- **Pagamenti in test mode** — Stripe in *test mode*: nessun addebito reale, nessun contratto PSP necessario.
-- **Disponibilità live "finta ma realistica"** — gli stati colonnina sono generati/seedati e aggiornati da un job schedulato, non da un feed CPO reale.
-- **Auth** — Netlify Identity non funziona con `netlify dev`; per provarla serve un deploy di preview (vedi `ARCHITECTURE.md`).
-- **Niente plug & charge, niente hardware/tessere fisiche** — fuori scope per la demo.
+| Cosa | Scelta |
+|---|---|
+| **Runtime** | Tutto ciò che è nostro gira in **Docker Compose** (infra oggi; `api`/`worker`/`web`/`ocpi-sim` quando scaffoldati) |
+| **Costi** | **Zero costi** — nessun servizio a pagamento in locale |
+| **Accordi commerciali** | **Nessuno** — niente CPO, hub OCPI, PSP reali; `ocpi-sim` + Stripe **test mode** |
+| **Servizi esterni** | **Ammessi solo se gratuiti** — es. [Stripe test](https://stripe.com) (account + API key gratis), [tile OSM](https://www.openstreetmap.org) (mappa), Stripe CLI per i webhook |
+| **Mobile** | **Rimandato** — per ora web in container; l'app nativa si definirà in seguito |
+| **Codice applicativo** | **Non ancora iniziato** — il repo contiene docs + `docker-compose.yml` + config `infra/` |
+
+Cosa resta simulato o esterno (ma sempre gratis):
+
+- **Ricarica** — `ocpi-sim` in Compose (OCPI 2.2.1, dati seed), non hub/CPO reali.
+- **Pagamenti** — Stripe *test mode*: crei un account gratuito, usi chiavi `sk_test_` / `pk_test_`, nessun addebito reale.
+- **Mappa** — tile da OpenStreetMap via internet; gratuite, senza API key.
+- **Email** — Mailpit in Compose (nessun SMTP esterno).
 
 ## Glossario
 

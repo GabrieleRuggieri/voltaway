@@ -1,0 +1,242 @@
+# Voltaway — stack di produzione in Docker Compose (locale).
+#
+# Politica locale (vedi ARCHITECTURE.md §2):
+#   - Servizi nostri → container Compose
+#   - Servizi esterni → solo se gratuiti (Stripe test, tile OSM)
+#   - Nessun accordo CPO/hub/PSP reale; codice app non ancora scaffoldato
+#
+# Profili:
+#   (default)  infra: parte subito anche senza codice app
+#              -> docker compose up -d
+#   app        servizi applicativi (richiedono lo scaffold di apps/*)
+#              -> docker compose --profile app up -d --build
+#   obs        osservabilita (Grafana OTel LGTM all-in-one)
+#              -> docker compose --profile obs up -d
+#
+# I domini *.voltaway.localhost risolvono a 127.0.0.1 nei browser moderni.
+
+name: voltaway
+
+x-app-environment: &app-environment
+  NODE_ENV: development
+  DATABASE_URL: postgres://${POSTGRES_USER:-voltaway}:${POSTGRES_PASSWORD:-voltaway}@postgres:5432/${POSTGRES_DB:-voltaway}
+  REDIS_URL: redis://redis:6379
+  OIDC_ISSUER_URL: http://keycloak:8080/realms/voltaway
+  OCPI_MODE: ${OCPI_MODE:-sim}
+  OCPI_BASE_URL: ${OCPI_BASE_URL:-http://ocpi-sim:4000}
+  OCPI_TOKEN: ${OCPI_TOKEN:-sim-token}
+  S3_ENDPOINT: http://minio:9000
+  S3_BUCKET: ${S3_BUCKET:-voltaway}
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-voltaway}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-voltaway-secret}
+  SMTP_HOST: mailpit
+  SMTP_PORT: "1025"
+  STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+  STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://observability:4318}
+
+services:
+  # ----------------------------------------------------------------------
+  # Gateway
+  # ----------------------------------------------------------------------
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+      - "8080:8080" # dashboard Traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [voltaway]
+
+  # ----------------------------------------------------------------------
+  # Dati
+  # ----------------------------------------------------------------------
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-voltaway}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voltaway}
+      POSTGRES_DB: ${POSTGRES_DB:-voltaway}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-voltaway} -d ${POSTGRES_DB:-voltaway}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks: [voltaway]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [voltaway]
+
+  # ----------------------------------------------------------------------
+  # Auth (Keycloak in dev mode, realm importato all'avvio)
+  # ----------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./infra/keycloak/realm:/opt/keycloak/data/import:ro
+      - kcdata:/opt/keycloak/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.auth.rule=Host(`auth.voltaway.localhost`)
+      - traefik.http.services.auth.loadbalancer.server.port=8080
+    networks: [voltaway]
+
+  # ----------------------------------------------------------------------
+  # Object storage (S3-compatibile)
+  # ----------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-voltaway}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-voltaway-secret}
+    ports:
+      - "9000:9000"
+      - "9001:9001" # console web
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.minio.rule=Host(`minio.voltaway.localhost`)
+      - traefik.http.services.minio.loadbalancer.server.port=9001
+    networks: [voltaway]
+
+  # ----------------------------------------------------------------------
+  # Email di test
+  # ----------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # web UI
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mail.rule=Host(`mail.voltaway.localhost`)
+      - traefik.http.services.mail.loadbalancer.server.port=8025
+    networks: [voltaway]
+
+  # ----------------------------------------------------------------------
+  # Servizi applicativi (profilo "app" — richiedono lo scaffold di apps/*)
+  # ----------------------------------------------------------------------
+  ocpi-sim:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/ocpi-sim/Dockerfile
+    environment:
+      NODE_ENV: development
+      PORT: "4000"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ocpi.rule=Host(`ocpi.voltaway.localhost`)
+      - traefik.http.services.ocpi.loadbalancer.server.port=4000
+    networks: [voltaway]
+
+  api:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      <<: *app-environment
+      PORT: "3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`api.voltaway.localhost`)
+      - traefik.http.services.api.loadbalancer.server.port=3001
+    networks: [voltaway]
+
+  worker:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      <<: *app-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [voltaway]
+
+  web:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://api.voltaway.localhost
+      NEXT_PUBLIC_OIDC_ISSUER_URL: http://auth.voltaway.localhost/realms/voltaway
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+      NEXT_PUBLIC_MAP_TILES_URL: ${NEXT_PUBLIC_MAP_TILES_URL:-https://tile.openstreetmap.org/{z}/{x}/{y}.png}
+    depends_on:
+      - api
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.web.rule=Host(`app.voltaway.localhost`)
+      - traefik.http.services.web.loadbalancer.server.port=3000
+    networks: [voltaway]
+
+  # ----------------------------------------------------------------------
+  # Osservabilita (profilo "obs" — Loki/Grafana/Tempo/Prometheus in un container)
+  # ----------------------------------------------------------------------
+  observability:
+    profiles: ["obs"]
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000" # Grafana
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.rule=Host(`grafana.voltaway.localhost`)
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
+    networks: [voltaway]
+
+networks:
+  voltaway:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  kcdata:
