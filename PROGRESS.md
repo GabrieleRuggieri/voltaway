@@ -43,8 +43,8 @@ feature/fix/chore/docs/*  →  develop  →  main
 
 | Branch | Esiste su remote | Ultimo commit noto | Note |
 |---|---|---|---|
-| `main` | sì | `c5c8ec7` | Architettura Docker + docs |
-| `develop` | sì | *(dopo push)* | branch di lavoro predefinito; aprire `feature/*` da qui |
+| `main` | sì | `c5c8ec7` | Architettura Docker + docs (stabile) |
+| `develop` | sì | `f784825` | branch di lavoro predefinito; aprire `feature/*` da qui |
 
 ---
 
@@ -84,10 +84,10 @@ feature/fix/chore/docs/*  →  develop  →  main
 - **Aggiornati** `README.md`, `.env.example`, `.gitignore`
 - **Politica locale** documentata: Docker per i servizi nostri, costo zero, nessun accordo commerciale, mobile e codice app rimandati
 
-**Commit successivo (questa sessione)** — branching + registro avanzamento
-- Creato branch `develop` come branch di lavoro predefinito
-- Creato `PROGRESS.md` (questo file)
-- Documentato workflow Git e branch previsti
+**Commit `f784825`** — `chore: branch develop e registro avanzamento PROGRESS.md`
+- Creato branch `develop` (tracking `origin/develop`)
+- Creato `PROGRESS.md` — cronologia, stato progetto, workflow Git, prossimi passi
+- Aggiornato `README.md` (riferimento a `PROGRESS.md`)
 
 ---
 
