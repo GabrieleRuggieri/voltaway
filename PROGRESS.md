@@ -1,6 +1,6 @@
 # Voltaway — Registro di avanzamento
 
-File di **controllo del lavoro svolto** e dello **stato del progetto**. Aggiornarlo a ogni sessione significativa, così — anche resettando chat o contesto — resta chiaro cosa è stato fatto e cosa manca.
+File di **controllo del lavoro svolto** e dello **stato del progetto**. Aggiornarlo a ogni sessione significativa.
 
 **Ultimo aggiornamento:** 2026-06-16
 
@@ -12,39 +12,20 @@ File di **controllo del lavoro svolto** e dello **stato del progetto**. Aggiorna
 
 | Branch | Scopo | Regola |
 |---|---|---|
-| `main` | **Stabile / rilasciabile** | Solo merge da `develop` (o hotfix) quando tutto funziona e i criteri di merge sono soddisfatti |
-| `develop` | **Integrazione** | Branch di lavoro predefinito; qui si mergiano feature/fix prima del rilascio su `main` |
+| `main` | **Stabile / rilasciabile** | Solo merge da `develop` quando tutto funziona |
+| `develop` | **Integrazione** | Branch predefinito; merge delle feature qui |
 
-### Branch di lavoro (da creare quando serve)
+### Branch di lavoro
 
-Aprire da `develop`, non da `main`:
-
-| Prefisso | Uso | Esempio |
+| Branch | Stato | Note |
 |---|---|---|
-| `feature/` | nuova funzionalità o modulo | `feature/scaffold-monorepo`, `feature/api-nestjs` |
-| `fix/` | correzione bug | `fix/ocpi-sim-session-timeout` |
-| `chore/` | tooling, CI, refactor senza feature | `chore/github-actions` |
-| `docs/` | solo documentazione | `docs/api-openapi` |
+| `feature/scaffold-monorepo` | **in corso** | monorepo + app base + Docker |
 
 ### Flusso
 
 ```text
-feature/fix/chore/docs/*  →  develop  →  main
-         (PR/merge)           (quando OK)    (release)
+feature/*  →  develop  →  main
 ```
-
-1. Partire sempre da `develop` aggiornato: `git checkout develop && git pull`
-2. Creare branch di lavoro: `git checkout -b feature/nome`
-3. Commit + push del branch di lavoro
-4. Merge in `develop` (PR o merge locale) quando la feature è completa e testata
-5. Merge `develop` → `main` solo quando l’intero stack locale funziona end-to-end (o per milestone concordata)
-
-### Stato branch (aggiornare manualmente)
-
-| Branch | Esiste su remote | Ultimo commit noto | Note |
-|---|---|---|---|
-| `main` | sì | `c5c8ec7` | Architettura Docker + docs (stabile) |
-| `develop` | sì | `f784825` | branch di lavoro predefinito; aprire `feature/*` da qui |
 
 ---
 
@@ -52,16 +33,23 @@ feature/fix/chore/docs/*  →  develop  →  main
 
 | Area | Stato | Note |
 |---|---|---|
-| Documentazione prodotto | ✅ fatto | `README.md` |
-| Architettura tecnica | ✅ fatto | `ARCHITECTURE.md` (stack production, Docker) |
-| Infrastruttura Docker | ✅ fatto | `docker-compose.yml` — profilo default avviabile |
-| Config Keycloak | ✅ fatto | `infra/keycloak/realm/voltaway-realm.json` |
-| Variabili ambiente | ✅ fatto | `.env.example` |
-| Codice applicativo (`apps/*`) | ⏳ non iniziato | profilo `app` in compose, Dockerfile da creare |
-| Monorepo (pnpm/turbo) | ⏳ non iniziato | |
-| CI (GitHub Actions) | ⏳ non iniziato | |
-
-**Comando infra locale oggi:** `cp .env.example .env && docker compose up -d`
+| Documentazione prodotto | ✅ | `README.md` |
+| Architettura tecnica | ✅ | `ARCHITECTURE.md` |
+| Infrastruttura Docker | ✅ | `docker-compose.yml` profili default + app |
+| Config Keycloak | ✅ | `infra/keycloak/realm/` |
+| Monorepo pnpm + Turbo | ✅ | `package.json`, `pnpm-workspace.yaml`, `turbo.json` |
+| `packages/core` | ✅ | motore prezzo all-in + test Vitest |
+| `packages/ocpi` | ✅ | tipi + `OcpiClient` |
+| `packages/db` | ✅ | schema Drizzle + migrazione `0000_init.sql` |
+| `apps/ocpi-sim` | ✅ | simulatore OCPI 2.2.1 (Milano seed) |
+| `apps/api` | ✅ | NestJS: `/health`, `/stations`, seed+migrate all'avvio |
+| `apps/worker` | ✅ | sync disponibilità periodico → API |
+| `apps/web` | ✅ | Next.js mappa MapLibre + lista prezzi all-in |
+| Build locale (`pnpm build`) | ✅ | tutti i package/app compilano |
+| Docker `profile app` | ⏳ | da verificare con Docker Desktop avviato |
+| CI GitHub Actions | ⏳ | |
+| Sessioni ricarica + Stripe | ⏳ | prossima milestone |
+| Mobile | ⏳ | fuori scope |
 
 ---
 
@@ -69,72 +57,56 @@ feature/fix/chore/docs/*  →  develop  →  main
 
 ### 2026-06-16 — Setup repository e architettura
 
-**Commit `d255663`** — `chore: initial repo — README, architettura demo, config Netlify`
-- Trasformato documento prodotto in `README.md`
-- Creato `ARCHITECTURE.md` (prima versione orientata Netlify)
-- Aggiunti `.gitignore`, `.env.example`, `netlify.toml`
+**`d255663`** — initial repo (README, architettura Netlify)  
+**`c5c8ec7`** — refactor Docker Compose production stack  
+**`f784825`** / **`41a76a3`** — branch `develop` + `PROGRESS.md`
 
-**Commit `c5c8ec7`** — `refactor: architettura production Docker Compose e politica locale`
-- **Rimosso** stack Netlify (`netlify.toml`)
-- **Riscritto** `ARCHITECTURE.md` per stack production:
-  - NestJS `api` + `worker`, BullMQ, Postgres+PostGIS, Redis, Keycloak, MinIO, Traefik
-  - `ocpi-sim` (OCPI simulato in Compose, nessun accordo CPO)
-  - Stripe **test mode** (account/chiavi gratis) + tile OSM (gratis) come unici esterni ammessi
-- **Aggiunti** `docker-compose.yml`, `.dockerignore`, `infra/keycloak/realm/`
-- **Aggiornati** `README.md`, `.env.example`, `.gitignore`
-- **Politica locale** documentata: Docker per i servizi nostri, costo zero, nessun accordo commerciale, mobile e codice app rimandati
+### 2026-06-16 — Scaffold monorepo e app base (`feature/scaffold-monorepo`)
 
-**Commit `f784825`** — `chore: branch develop e registro avanzamento PROGRESS.md`
-- Creato branch `develop` (tracking `origin/develop`)
-- Creato `PROGRESS.md` — cronologia, stato progetto, workflow Git, prossimi passi
-- Aggiornato `README.md` (riferimento a `PROGRESS.md`)
+- Monorepo **pnpm workspaces + Turborepo**
+- **`packages/core`**: `computeAllInPrice`, test Vitest (2 test)
+- **`packages/ocpi`**: interfaccia + client HTTP OCPI 2.2.1
+- **`packages/db`**: Postgres schema (`cpos`, `stations`, `evses`, `sessions`), migrazione SQL
+- **`apps/ocpi-sim`**: Express, endpoint OCPI, 2 location Milano, tariffe simulate
+- **`apps/api`**: NestJS, migrazioni+seed all'avvio, `GET /stations` con prezzo all-in, `GET /stations/sync`
+- **`apps/worker`**: polling sync ogni 60s
+- **`apps/web`**: landing + mappa MapLibre + card stazioni
+- Dockerfile per ogni app (build da root monorepo)
+- `docker-compose.yml`: dipendenze `api`/`worker`/`web` → `ocpi-sim`
 
----
+**Verifica locale eseguita:**
+```bash
+pnpm install
+pnpm --filter @voltaway/core test   # 2 passed
+pnpm build                          # tutti i package OK
+```
 
-## Prossimi passi (ordine suggerito)
-
-Aggiornare questa lista man mano che si completa il lavoro.
-
-- [ ] **Scaffold monorepo** — `pnpm-workspace.yaml`, Turborepo, `packages/config`
-- [ ] **`packages/core`** — tipi dominio, motore tariffario all-in (con test Vitest)
-- [ ] **`packages/ocpi`** — interfaccia + client OCPI
-- [ ] **`apps/ocpi-sim`** — simulatore CPO OCPI 2.2.1 + Dockerfile
-- [ ] **`packages/db`** — schema Drizzle, migrazioni, seed beachhead
-- [ ] **`apps/api`** — NestJS REST + WebSocket + Dockerfile
-- [ ] **`apps/worker`** — consumer BullMQ + Dockerfile
-- [ ] **`apps/web`** — Next.js mappa/prezzo/sessione + Dockerfile
-- [ ] Verifica end-to-end: `docker compose --profile app up -d --build`
-- [ ] Merge `develop` → `main` quando lo stack app funziona in locale
-
-### Branch previsti (da aprire al momento giusto)
-
-| Branch | Quando |
-|---|---|
-| `feature/scaffold-monorepo` | primo passo sviluppo |
-| `feature/ocpi-sim` | dopo core + ocpi package |
-| `feature/api-nestjs` | dopo db + ocpi-sim |
-| `feature/worker-bullmq` | dopo api base |
-| `feature/web-nextjs` | dopo api con endpoint stazioni/sessioni |
-| `chore/ci-github-actions` | quando esiste codice da testare |
+**Verifica Docker (da fare con Docker avviato):**
+```bash
+cp .env.example .env
+docker compose up -d
+docker compose --profile app up -d --build
+# app.voltaway.localhost  → web
+# api.voltaway.localhost/health  → api
+# ocpi.voltaway.localhost/health → ocpi-sim
+```
 
 ---
 
-## Come aggiornare questo file
+## Prossimi passi
 
-A fine sessione (o a milestone completata):
-
-1. Aggiornare **Ultimo aggiornamento** in cima
-2. Aggiungere voce in **Cronologia lavoro** (data, commit, cosa è stato fatto)
-3. Aggiornare **Stato attuale del progetto** (✅ / ⏳ / ❌)
-4. Spuntare o aggiungere voci in **Prossimi passi**
-5. Aggiornare tabella **Stato branch** se cambiano branch o commit di riferimento
+- [ ] Verificare `docker compose --profile app up -d --build` con Docker Desktop
+- [ ] Merge `feature/scaffold-monorepo` → `develop`
+- [ ] `POST /sessions` — avvio/stop ricarica via OCPI + quote persistita
+- [ ] Integrazione Stripe test mode (SetupIntent / PaymentIntent)
+- [ ] WebSocket stato sessione live
+- [ ] CI GitHub Actions (build + test)
+- [ ] Merge `develop` → `main` quando E2E locale OK
 
 ---
 
 ## Riferimenti rapidi
 
-- Prodotto e avvio: [`README.md`](./README.md)
-- Architettura e Docker: [`ARCHITECTURE.md`](./ARCHITECTURE.md)
-- Compose: [`docker-compose.yml`](./docker-compose.yml)
-- Env: [`.env.example`](./.env.example)
+- [`README.md`](./README.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`docker-compose.yml`](./docker-compose.yml)
+- Dev locale senza Docker app: `pnpm install && pnpm --filter @voltaway/ocpi-sim dev` (+ api, web in parallelo)
 - Repo: https://github.com/GabrieleRuggieri/voltaway

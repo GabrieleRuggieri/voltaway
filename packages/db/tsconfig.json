@@ -1,0 +1,9 @@
+{
+  "extends": "../config/tsconfig.node.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/index.ts", "src/schema.ts"],
+  "exclude": ["src/migrate.ts", "src/seed.ts"]
+}

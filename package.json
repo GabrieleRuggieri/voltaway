@@ -1,0 +1,18 @@
+{
+  "name": "voltaway",
+  "private": true,
+  "packageManager": "pnpm@10.12.1",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "db:generate": "pnpm --filter @voltaway/db db:generate",
+    "db:migrate": "pnpm --filter @voltaway/db db:migrate",
+    "db:seed": "pnpm --filter @voltaway/db db:seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  }
+}

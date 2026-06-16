@@ -176,6 +176,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      ocpi-sim:
+        condition: service_started
     labels:
       - traefik.enable=true
       - traefik.http.routers.api.rule=Host(`api.voltaway.localhost`)
@@ -189,11 +191,16 @@ services:
       dockerfile: apps/worker/Dockerfile
     environment:
       <<: *app-environment
+      API_INTERNAL_URL: http://api:3001
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      api:
+        condition: service_started
+      ocpi-sim:
+        condition: service_started
     networks: [voltaway]
 
   web:
@@ -209,6 +216,7 @@ services:
       NEXT_PUBLIC_MAP_TILES_URL: ${NEXT_PUBLIC_MAP_TILES_URL:-https://tile.openstreetmap.org/{z}/{x}/{y}.png}
     depends_on:
       - api
+      - ocpi-sim
     labels:
       - traefik.enable=true
       - traefik.http.routers.web.rule=Host(`app.voltaway.localhost`)

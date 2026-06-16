@@ -215,41 +215,43 @@ Sintesi delle scelte. Razionale completo, diagrammi, modello dati e flussi in [`
 
 ```text
 voltaway/
-├── README.md            # Questo file — prodotto + indice tecnico
-├── ARCHITECTURE.md      # Stack, moduli, modello dati, flussi, Docker
-├── PROGRESS.md          # Registro avanzamento, cronologia, workflow Git
-├── docker-compose.yml   # Stack di produzione eseguibile in locale
-├── .env.example         # Variabili d'ambiente di riferimento
-├── .dockerignore
-├── infra/               # Config piattaforma (realm Keycloak, ecc.)
-└── .gitignore
+├── apps/
+│   ├── api/             # NestJS REST
+│   ├── worker/          # BullMQ / sync
+│   ├── web/             # Next.js mappa
+│   └── ocpi-sim/        # simulatore CPO OCPI
+├── packages/
+│   ├── core/            # dominio + motore prezzo
+│   ├── ocpi/            # client OCPI
+│   └── db/              # Drizzle schema
+├── PROGRESS.md          # registro avanzamento
+├── docker-compose.yml
+└── ...
 ```
 
 ## Avvio rapido
 
-Prerequisiti **ora**: solo **Docker** + **Docker Compose v2**.
-
-Quando inizierà lo sviluppo applicativo serviranno anche **Node.js 22 LTS**, **pnpm** e la **Stripe CLI** (tutte gratuite) per build locali e webhook Stripe in test mode.
+Prerequisiti: **Docker** + **Docker Compose v2** (per stack completo), oppure **Node 22** + **pnpm** (solo app).
 
 ```bash
-# 1. Variabili d'ambiente (compila le chiavi Stripe test quando svilupperai l'app)
 cp .env.example .env
 
-# 2. Infrastruttura — funziona GIÀ ORA, senza codice app
+# Infrastruttura
 docker compose up -d
-#    postgres, redis, keycloak, minio, mailpit, traefik
 
-# 3. Stack applicativo — dopo lo scaffold di apps/*
-docker compose --profile app up -d --build   # + api, worker, web, ocpi-sim
-
-# 4. Osservabilità (opzionale)
-docker compose --profile obs up -d
-
-# 5. Webhook Stripe (quando l'app esiste) — account Stripe gratuito + Stripe CLI
-stripe listen --forward-to http://api.voltaway.localhost/webhooks/stripe
+# Stack applicativo (build + avvio)
+docker compose --profile app up -d --build
 ```
 
-Console utili: Mailpit `http://mail.voltaway.localhost`, MinIO `http://minio.voltaway.localhost`, Keycloak `http://auth.voltaway.localhost`, Grafana `http://grafana.voltaway.localhost`.
+**Sviluppo senza rebuild Docker** (con infra già su Compose):
+```bash
+pnpm install
+pnpm --filter @voltaway/ocpi-sim dev   # :4000
+pnpm --filter @voltaway/api dev        # :3001
+pnpm --filter @voltaway/web dev         # :3000
+```
+
+Console: `app.voltaway.localhost` · `api.voltaway.localhost/health` · `auth.voltaway.localhost`
 
 ## Politica sviluppo locale
 
@@ -262,7 +264,7 @@ Regole per questa fase (documentazione + infra, sviluppo app più avanti):
 | **Accordi commerciali** | **Nessuno** — niente CPO, hub OCPI, PSP reali; `ocpi-sim` + Stripe **test mode** |
 | **Servizi esterni** | **Ammessi solo se gratuiti** — es. [Stripe test](https://stripe.com) (account + API key gratis), [tile OSM](https://www.openstreetmap.org) (mappa), Stripe CLI per i webhook |
 | **Mobile** | **Rimandato** — per ora web in container; l'app nativa si definirà in seguito |
-| **Codice applicativo** | **Non ancora iniziato** — il repo contiene docs + `docker-compose.yml` + config `infra/` |
+| **Codice applicativo** | **Scaffold base fatto** — mappa + prezzi all-in; sessioni/Stripe prossimi |
 
 Cosa resta simulato o esterno (ma sempre gratis):
 
