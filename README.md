@@ -217,6 +217,7 @@ Sintesi delle scelte. Razionale completo, diagrammi, modello dati e flussi in [`
 voltaway/
 ├── README.md            # Questo file — prodotto + indice tecnico
 ├── ARCHITECTURE.md      # Stack, moduli, modello dati, flussi, Docker
+├── PROGRESS.md          # Registro avanzamento, cronologia, workflow Git
 ├── docker-compose.yml   # Stack di produzione eseguibile in locale
 ├── .env.example         # Variabili d'ambiente di riferimento
 ├── .dockerignore
