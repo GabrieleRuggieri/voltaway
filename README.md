@@ -9,7 +9,7 @@
 
 Voltaway è un **e-Mobility Service Provider (eMSP)**: un livello software sopra le reti di ricarica altrui. Non possiede né colonnine né energia — aggrega gli operatori via roaming **OCPI** e vince sulla **trasparenza del prezzo** e sull'**affidabilità**.
 
-> **Nota su questa repo.** Fase attuale: **documentazione + infrastruttura Docker** — lo sviluppo applicativo (`apps/*`) inizierà più avanti. Lo stack è quello di produzione, eseguibile in locale via **Docker Compose**; l'integrazione ricarica passa da **`ocpi-sim`** (OCPI simulato, nessun accordo CPO); i pagamenti da **Stripe test mode** (account e chiavi API gratuiti). Servizi esterni ammessi **solo se gratuiti** (es. tile OpenStreetMap). Dettagli in [`ARCHITECTURE.md`](./ARCHITECTURE.md) e [Politica sviluppo locale](#politica-sviluppo-locale).
+> **Nota su questa repo.** Fase attuale: **demo locale end-to-end** — monorepo applicativo (`apps/*`, `packages/*`) + infrastruttura Docker. `docker compose up -d --build` avvia mappa, API, worker, `ocpi-sim` (OCPI simulato Catania): prezzo all-in, avvio/stop ricarica, WebSocket live. **Mancano ancora** pagamenti Stripe, login Keycloak e altre parti dell'architettura target — elenco completo in [`BACKLOG.md`](./BACKLOG.md). Stack di produzione in locale via **Docker Compose**; servizi esterni ammessi **solo se gratuiti** (tile OpenStreetMap). Dettagli in [`ARCHITECTURE.md`](./ARCHITECTURE.md), flussi in [`CODEMAP.md`](./CODEMAP.md), avanzamento in [`PROGRESS.md`](./PROGRESS.md).
 
 ## Indice
 
@@ -206,25 +206,31 @@ Sintesi delle scelte. Razionale completo, diagrammi, modello dati e flussi in [`
 | Auth | **Keycloak** (OIDC/RBAC, self-hosted) | ruoli `driver`/`fleet_admin`/`admin` |
 | Integrazione ricarica | client **OCPI 2.2.1** + servizio **`ocpi-sim`** | CPO simulato che parla OCPI reale |
 | Gateway | **Traefik v3** | reverse proxy `*.voltaway.localhost` |
-| Qualità / osservabilità | Vitest + Playwright + Testcontainers, ESLint/Prettier, SonarQube, OpenTelemetry → Grafana, Sentry | CI su GitHub Actions |
+| Formattazione / tipi | **Prettier** + **TypeScript** (strict) | `pnpm format`; type-check per pacchetto |
+| Test | **Vitest** | motore prezzo (`packages/core`); eseguito in CI |
+| CI | **GitHub Actions** | `format:check` · `build` · `test` — vedi `.github/workflows/ci.yml` |
+| Qualità / osservabilità | Playwright, Testcontainers, SonarQube, Zod, OpenTelemetry → Grafana, Sentry | **pianificato**, non ancora nel repo — vedi [`BACKLOG.md`](./BACKLOG.md) |
 | Runtime | **Docker + Docker Compose** | infra in container; servizi esterni solo se gratuiti |
 
 ## Struttura del repository
 
-> Il repository contiene **attualmente** la documentazione (`README.md`, `ARCHITECTURE.md`) e l'infrastruttura locale (`docker-compose.yml`, config `infra/`, `.env.example`). Lo scaffold del codice applicativo (`apps/*`) è il passo successivo: la struttura target (monorepo) è in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
+Monorepo **pnpm + Turborepo** con app e pacchetti condivisi. Cosa manca rispetto al target: [`BACKLOG.md`](./BACKLOG.md).
 
 ```text
 voltaway/
 ├── apps/
-│   ├── api/             # NestJS REST
-│   ├── worker/          # BullMQ / sync
-│   ├── web/             # Next.js mappa
-│   └── ocpi-sim/        # simulatore CPO OCPI
+│   ├── api/             # NestJS REST + WebSocket + BullMQ scheduler
+│   ├── worker/          # BullMQ consumer (sync disponibilità)
+│   ├── web/             # Next.js mappa + sessioni live
+│   └── ocpi-sim/        # simulatore CPO OCPI (Catania)
 ├── packages/
-│   ├── core/            # dominio + motore prezzo
-│   ├── ocpi/            # client OCPI
-│   └── db/              # Drizzle schema
+│   ├── core/            # motore prezzo all-in + test
+│   ├── ocpi/            # client OCPI 2.2.1
+│   ├── db/              # schema Drizzle + migrazioni
+│   └── config/          # preset TypeScript
 ├── PROGRESS.md          # registro avanzamento
+├── BACKLOG.md           # cosa manca ancora (tecnico)
+├── CODEMAP.md           # diagrammi flusso
 ├── docker-compose.yml
 └── ...
 ```
@@ -260,16 +266,16 @@ Console: `app.voltaway.localhost` · `api.voltaway.localhost/health` · `auth.vo
 
 ## Politica sviluppo locale
 
-Regole per questa fase (documentazione + infra, sviluppo app più avanti):
+Regole per questa fase (demo locale senza accordi commerciali):
 
 | Cosa | Scelta |
 |---|---|
-| **Runtime** | Tutto ciò che è nostro gira in **Docker Compose** (infra oggi; `api`/`worker`/`web`/`ocpi-sim` quando scaffoldati) |
+| **Runtime** | Tutto ciò che è nostro gira in **Docker Compose** (`api`, `worker`, `web`, `ocpi-sim` + infra) |
 | **Costi** | **Zero costi** — nessun servizio a pagamento in locale |
-| **Accordi commerciali** | **Nessuno** — niente CPO, hub OCPI, PSP reali; `ocpi-sim` + Stripe **test mode** |
-| **Servizi esterni** | **Ammessi solo se gratuiti** — es. [Stripe test](https://stripe.com) (account + API key gratis), [tile OSM](https://www.openstreetmap.org) (mappa), Stripe CLI per i webhook |
-| **Mobile** | **Rimandato** — per ora web in container; l'app nativa si definirà in seguito |
-| **Codice applicativo** | **Scaffold base fatto** — mappa + prezzi all-in; sessioni/Stripe prossimi |
+| **Accordi commerciali** | **Nessuno** — niente CPO, hub OCPI, PSP reali; `ocpi-sim` (+ Stripe **test mode** quando implementato) |
+| **Servizi esterni** | **Ammessi solo se gratuiti** — es. [tile OSM](https://www.openstreetmap.org) (mappa); [Stripe test](https://stripe.com) e Stripe CLI per i webhook (prossima milestone) |
+| **Mobile** | **Rimandato** — per ora solo web; vedi [`BACKLOG.md`](./BACKLOG.md) |
+| **Codice applicativo** | **Demo E2E** — mappa, prezzi all-in, sessioni OCPI start/stop, WebSocket; pagamenti e auth in backlog |
 
 Cosa resta simulato o esterno (ma sempre gratis):
 

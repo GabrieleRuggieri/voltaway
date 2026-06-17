@@ -33,7 +33,8 @@ feature/*  →  develop  →  main
 | `apps/api` | ✅ | stations, sessions, WebSocket, BullMQ scheduler |
 | `apps/worker` | ✅ | sync disponibilità via BullMQ |
 | `apps/web` | ✅ | mappa, UI premium, ricarica live |
-| CI GitHub Actions | ✅ | `.github/workflows/ci.yml` |
+| CI GitHub Actions | ✅ | format:check · build · test (no lint in pipeline) |
+| Qualità codice | ✅ | Prettier + TypeScript strict + Vitest (`packages/core`) |
 | Sessioni ricarica OCPI | ✅ | start/stop + CDR + quote |
 | WebSocket sessioni | ✅ | namespace `/sessions` |
 | Stripe test mode | ⏳ | prossima milestone |
@@ -85,15 +86,11 @@ docker compose up -d --build
 
 ## Prossimi passi
 
-- [ ] Stripe test mode (PaymentIntent + webhook)
-- [ ] Keycloak OIDC nella web app
-- [ ] Merge `feature/scaffold-monorepo` → `develop`
-- [ ] Test E2E Playwright
-- [ ] PostGIS `geography` per query bbox
+Vedi [`BACKLOG.md`](./BACKLOG.md) — elenco completo di ciò che manca (Stripe, Keycloak, E2E, PostGIS, …).
 
 ---
 
 ## Riferimenti
 
-- [`README.md`](./README.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+- [`README.md`](./README.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`BACKLOG.md`](./BACKLOG.md) · [`CODEMAP.md`](./CODEMAP.md)
 - Dev senza Docker app: `pnpm install && pnpm --filter @voltaway/ocpi-sim dev` (+ api, web)

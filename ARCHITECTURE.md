@@ -2,7 +2,9 @@
 
 Architettura **production-grade** dell'eMSP Voltaway (vedi [`README.md`](./README.md)), eseguibile in locale via **Docker Compose**.
 
-> **Fase attuale.** Il repository contiene documentazione, infrastruttura Docker e monorepo applicativo (`apps/*`, `packages/*`). `docker compose up -d --build` avvia lo stack completo (infra + api, worker, web, ocpi-sim).
+> **Fase attuale.** Il repository contiene documentazione, infrastruttura Docker e monorepo applicativo funzionante. `docker compose up -d --build` avvia lo stack completo: mappa con prezzo all-in, sessioni OCPI start/stop (senza pagamento), WebSocket, sync disponibilità via worker.
+>
+> **Gap rispetto al target.** Pagamenti Stripe, auth Keycloak nell'app, schema dati completo, ricevute MinIO e altro sono ancora da fare — vedi [`BACKLOG.md`](./BACKLOG.md). I diagrammi del codice attuale sono in [`CODEMAP.md`](./CODEMAP.md).
 >
 > **Obiettivo.** Lo stack è quello dell'app vera e propria: backend dedicato always-on, Postgres+PostGIS, Redis, code, realtime, IdP self-hosted, object storage, gateway. I servizi **nostri** girano in container; i **servizi esterni sono ammessi solo se gratuiti** (Stripe test mode, tile OpenStreetMap).
 >
@@ -43,16 +45,16 @@ Architettura **production-grade** dell'eMSP Voltaway (vedi [`README.md`](./READM
 
 ## 2. Politica sviluppo locale
 
-Vincoli espliciti per questa fase (infra + docs; codice app in arrivo):
+Vincoli espliciti per la demo locale (nessun accordo commerciale):
 
 | Regola | Dettaglio |
 |---|---|
-| **Docker Compose** | Tutti i servizi **nostri** (infra + `api`/`worker`/`web`/`ocpi-sim` quando scaffoldati) girano in container |
+| **Docker Compose** | Tutti i servizi **nostri** (`api`, `worker`, `web`, `ocpi-sim` + infra) girano in container |
 | **Costo zero** | Nessun servizio a pagamento in locale |
-| **Nessun accordo** | Niente CPO, hub OCPI, PSP reali — `ocpi-sim` + Stripe **test mode** |
+| **Nessun accordo** | Niente CPO, hub OCPI, PSP reali — `ocpi-sim` (+ Stripe **test mode** quando implementato) |
 | **Esterni ammessi** | Solo se **gratuiti** e senza contratto commerciale |
-| **Mobile** | **Fuori scope attuale** — si definirà in seguito; per ora solo web in container |
-| **Codice app** | **Non ancora iniziato** — repo = docs + `docker-compose.yml` + `infra/` |
+| **Mobile** | **Fuori scope attuale** — vedi [`BACKLOG.md`](./BACKLOG.md) |
+| **Codice app** | **Demo E2E** — mappa, prezzi, sessioni OCPI, WS; pagamenti/auth in [`BACKLOG.md`](./BACKLOG.md) |
 
 ### Servizi esterni gratuiti (ammessi)
 
@@ -139,10 +141,10 @@ L'**API** serve REST + WebSocket ai client; il **worker** esegue i processi asin
 | Pagamenti | **Stripe test mode** (account + API key gratuiti) | PaymentIntents + SCA; webhook via Stripe CLI |
 | Gateway | **Traefik v3** | reverse proxy con service discovery via label, TLS in prod |
 | Email | **Mailpit** (locale) | cattura email di conferma/ricevute |
-| Validazione | **Zod** | un solo schema per input API e form |
-| Test | **Vitest** + **Playwright** + **Testcontainers** | unit/integration/e2e con Postgres/Redis reali in CI |
-| Qualità | ESLint + Prettier + TS strict + **SonarQube** | + Husky/lint-staged |
-| Osservabilità | **OpenTelemetry** → **Grafana OTel LGTM** (Loki/Grafana/Tempo/Prometheus) + Sentry | log, metriche, tracce in un container |
+| Validazione | **Zod** | *pianificato* — schema condiviso input API e form |
+| Test | **Vitest** | ✅ oggi: motore prezzo (`packages/core`); *pianificato*: Playwright e2e, Testcontainers in CI |
+| Qualità | **Prettier** + **TypeScript** (strict) | ✅ oggi: formattazione e type-check; *pianificato*: SonarQube in CI |
+| Osservabilità | **OpenTelemetry** → **Grafana OTel LGTM** + **Sentry** | *pianificato* — stack LGTM in Compose (profilo `obs`), app non instrumentata |
 | Esecuzione | **Docker + Docker Compose** | servizi nostri in container; esterni solo se gratuiti |
 
 **Note di scelta**
@@ -178,7 +180,7 @@ I domini `*.voltaway.localhost` risolvono a `127.0.0.1` nei browser moderni (ved
 
 ## 6. Struttura del monorepo
 
-Struttura **target** per quando inizierà lo sviluppo. Il repository contiene oggi documentazione e infrastruttura (`docker-compose.yml`, `infra/`); lo scaffold di `apps/*` è il passo successivo.
+Struttura attuale del repository (pacchetti opzionali `api-client`/`ui` in backlog — vedi [`BACKLOG.md`](./BACKLOG.md)).
 
 ```text
 voltaway/
@@ -210,6 +212,8 @@ voltaway/
 ```
 
 ## 7. Moduli di dominio
+
+> Le sezioni 7–9 descrivono l'**architettura target**. Per cosa è già nel codice vs cosa manca, vedi [`BACKLOG.md`](./BACKLOG.md) e [`CODEMAP.md`](./CODEMAP.md).
 
 ### 7.1 OCPI
 
@@ -376,21 +380,38 @@ sequenceDiagram
 - **Segreti**: in `.env` per il locale; in produzione tramite secret manager dell'orchestratore. Mai in repo.
 - **GDPR**: minimizzazione (si conserva ciò che serve a sessione/fatturazione), export/cancellazione previsti; geolocalizzazione usata solo per la ricerca colonnine.
 - **AFIR / trasparenza prezzo**: €/kWh all-in mostrato **prima** dell'avvio — requisito regolatorio oltre che posizionamento.
-- **Hardening**: header di sicurezza al gateway, rate-limit (Redis), validazione Zod su ogni input, webhook firmati e idempotenti.
+- **Hardening**: header di sicurezza al gateway, rate-limit (Redis), validazione Zod su ogni input *(pianificato)*, webhook firmati e idempotenti.
 
 ## 13. Osservabilità e qualità
 
-- **OpenTelemetry** in `api`/`worker` → esportazione OTLP verso **Grafana OTel LGTM** (Loki/Grafana/Tempo/Prometheus in un container) per log, metriche e tracce correlate.
-- **Sentry** per gli errori applicativi.
-- **KPI tecnici** (dal README) su dashboard Grafana: tasso avvio riuscito, scostamento prezzo, % stato live corretto.
-- **Qualità**: ESLint + Prettier + TS strict, **SonarQube** in CI.
-- **Test**: Vitest (motore tariffario con tabelle di casi: scostamento atteso 0; macchina a stati), integration con **Testcontainers** (Postgres/Redis reali), e2e Playwright sul flusso mappa→prezzo→avvio→ricevuta.
+### Oggi (nel repo)
+
+| Area | Stato | Dettaglio |
+|---|---|---|
+| Formattazione | ✅ | Prettier (`pnpm format` / `format:check` in CI) |
+| Tipi | ✅ | TypeScript strict; `lint` = `tsc --noEmit` (api, worker, packages); `next lint` su web |
+| Test unitari | ✅ | Vitest su `packages/core` (motore all-in); `pnpm test` in CI |
+| CI | ✅ | GitHub Actions: `format:check` → `build` → `test` (`.github/workflows/ci.yml`) |
+
+### Pianificato (vedi [`BACKLOG.md`](./BACKLOG.md))
+
+| Area | Dettaglio |
+|---|---|
+| **Test e2e** | Playwright sul flusso mappa → prezzo → avvio → ricevuta |
+| **Test integrazione** | Testcontainers (Postgres/Redis reali) in CI |
+| **Validazione** | Zod su ogni input API |
+| **Analisi statica** | SonarQube in CI |
+| **Tracing / metriche** | OpenTelemetry in `api`/`worker` → Grafana OTel LGTM (profilo Compose `obs`) |
+| **Errori applicativi** | Sentry |
+| **KPI tecnici** | Dashboard Grafana: tasso avvio riuscito, scostamento prezzo, % stato live corretto |
+
+> Non sono previsti git hooks pre-commit (es. Husky): la qualità passa da CI e comandi `pnpm` espliciti.
 
 ## 14. Sviluppo locale
 
-**Prerequisiti ora:** solo **Docker** + **Docker Compose v2**.
+**Prerequisiti:** **Docker** + **Docker Compose v2**. Per sviluppo senza rebuild container: **Node.js 22 LTS**, **pnpm**.
 
-Quando inizierà lo sviluppo applicativo: **Node.js 22 LTS**, **pnpm**, account **Stripe** gratuito (chiavi test) e **Stripe CLI** (gratuita) per i webhook.
+Account **Stripe** gratuito (chiavi test) e **Stripe CLI** serviranno quando saranno implementati pagamenti e webhook — vedi [`BACKLOG.md`](./BACKLOG.md).
 
 ```bash
 # 0. variabili d'ambiente
@@ -403,11 +424,11 @@ docker compose up -d --build                 # postgres, redis, keycloak, minio,
 # 2. osservabilità (opzionale)
 docker compose --profile obs up -d         # Grafana OTel LGTM
 
-# 4. webhook Stripe (quando l'app esiste) — Stripe CLI sull'host, gratuita
+# 4. webhook Stripe (quando implementato) — Stripe CLI sull'host, gratuita
 stripe listen --forward-to http://api.voltaway.localhost/webhooks/stripe
 ```
 
-- **Migrazioni/seed** (quando esiste il codice): `pnpm db:migrate` e `pnpm db:seed` contro il Postgres in container.
+- **Migrazioni/seed:** `pnpm db:migrate` e `pnpm db:seed` (eseguiti anche all'avvio API in Docker).
 - **Mobile**: fuori scope attuale; si definirà in seguito.
 - **Mappa**: tile da OpenStreetMap (gratuite, via internet) — vedi [§2](#2-politica-sviluppo-locale).
 
