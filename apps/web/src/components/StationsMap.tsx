@@ -6,9 +6,9 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { StationMarker } from '@/lib/api';
 
 const TILES =
-  process.env.NEXT_PUBLIC_MAP_TILES_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  process.env.NEXT_PUBLIC_MAP_TILES_URL ?? 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
 
-const MILAN_CENTER: [number, number] = [9.19, 45.46];
+const CATANIA_CENTER: [number, number] = [15.087, 37.508];
 
 export function StationsMap({
   stations,
@@ -35,12 +35,12 @@ export function StationsMap({
             type: 'raster',
             tiles: [TILES],
             tileSize: 256,
-            attribution: '© OpenStreetMap',
+            attribution: '© OpenStreetMap © CARTO',
           },
         },
         layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
       },
-      center: stations[0] ? [stations[0].longitude, stations[0].latitude] : MILAN_CENTER,
+      center: stations[0] ? [stations[0].longitude, stations[0].latitude] : CATANIA_CENTER,
       zoom: 13,
       attributionControl: false,
     });

@@ -39,15 +39,15 @@ const tariffs: Record<string, OcpiTariff> = {
 
 const locations: OcpiLocation[] = [
   {
-    id: 'loc-milano-centro',
+    id: 'loc-catania-duomo',
     name: 'Hub Duomo',
     address: 'Piazza del Duomo',
-    city: 'Milano',
+    city: 'Catania',
     country: 'IT',
-    coordinates: { latitude: '45.4642', longitude: '9.1900' },
+    coordinates: { latitude: '37.5079', longitude: '15.0830' },
     evses: [
       {
-        uid: 'loc-milano-centro-evse-1',
+        uid: 'loc-catania-duomo-evse-1',
         evse_id: 'IT*SIM*E001',
         status: 'AVAILABLE',
         max_power_kw: 50,
@@ -64,7 +64,7 @@ const locations: OcpiLocation[] = [
         ],
       },
       {
-        uid: 'loc-milano-centro-evse-2',
+        uid: 'loc-catania-duomo-evse-2',
         evse_id: 'IT*SIM*E002',
         status: 'AVAILABLE',
         max_power_kw: 22,
@@ -83,15 +83,15 @@ const locations: OcpiLocation[] = [
     ],
   },
   {
-    id: 'loc-milano-navigli',
-    name: 'Navigli Charge',
-    address: 'Alzaia Naviglio Grande 12',
-    city: 'Milano',
+    id: 'loc-catania-porto',
+    name: 'Porto Charge',
+    address: 'Via Cardinale Dusmet 2',
+    city: 'Catania',
     country: 'IT',
-    coordinates: { latitude: '45.4481', longitude: '9.1762' },
+    coordinates: { latitude: '37.5028', longitude: '15.0962' },
     evses: [
       {
-        uid: 'loc-milano-navigli-evse-1',
+        uid: 'loc-catania-porto-evse-1',
         evse_id: 'IT*SIM*E003',
         status: 'CHARGING',
         max_power_kw: 50,
@@ -108,7 +108,7 @@ const locations: OcpiLocation[] = [
         ],
       },
       {
-        uid: 'loc-milano-navigli-evse-2',
+        uid: 'loc-catania-porto-evse-2',
         evse_id: 'IT*SIM*E004',
         status: 'OUTOFORDER',
         max_power_kw: 22,

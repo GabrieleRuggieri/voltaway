@@ -2,14 +2,29 @@
 
 :root {
   color-scheme: dark;
-  --bg: #070b14;
-  --sheet-bg: #f8fafc;
-  --sheet-text: #0f172a;
-  --sheet-muted: #64748b;
-  --accent: #06b6d4;
-  --accent-dark: #0891b2;
-  --success: #10b981;
-  --danger: #ef4444;
+  /* EV cockpit palette — charcoal night + electric charge accents */
+  --bg: #05080d;
+  --surface: #0f1419;
+  --surface-raised: #171e28;
+  --surface-overlay: rgba(12, 17, 24, 0.92);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-glow: rgba(46, 230, 197, 0.28);
+  --text: #e8edf4;
+  --text-muted: #7d8a9a;
+  --text-dim: #5c6778;
+  --accent: #2ee6c5;
+  --accent-bright: #5efce8;
+  --accent-dark: #14b8a6;
+  --accent-blue: #38bdf8;
+  --accent-glow: rgba(46, 230, 197, 0.35);
+  --success: #34d399;
+  --success-glow: rgba(52, 211, 153, 0.45);
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --sheet-bg: var(--surface);
+  --sheet-text: var(--text);
+  --sheet-muted: var(--text-muted);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   font-family: 'DM Sans', system-ui, sans-serif;
@@ -26,14 +41,16 @@ body {
   height: 100%;
   overflow: hidden;
   background: var(--bg);
+  color: var(--text);
 }
 
-/* ── Full-screen map shell (EasyPark-style) ── */
+/* ── Full-screen map shell ── */
 
 .map-screen {
   position: fixed;
   inset: 0;
   overflow: hidden;
+  background: var(--bg);
 }
 
 .map-fullscreen {
@@ -41,6 +58,19 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+/* Subtle vignette — night-drive / dashboard depth */
+.map-fullscreen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(5, 8, 13, 0.55) 0%, transparent 18%),
+    linear-gradient(0deg, rgba(5, 8, 13, 0.7) 0%, transparent 28%),
+    radial-gradient(ellipse at center, transparent 40%, rgba(5, 8, 13, 0.25) 100%);
+  z-index: 1;
 }
 
 .map-top-bar {
@@ -66,15 +96,18 @@ body {
   gap: 8px;
   padding: 10px 14px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #f8fafc;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  background: var(--surface-overlay);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .map-brand-mark {
   font-size: 1.1rem;
+  filter: drop-shadow(0 0 6px var(--accent-glow));
 }
 
 .map-brand-name {
@@ -86,15 +119,20 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(15, 23, 42, 0.88);
-  color: #f8fafc;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-overlay);
+  color: var(--text);
   font-size: 1.25rem;
   cursor: pointer;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-/* Map pins — inspired by 21st map / pricing markers */
+.map-refresh:active:not(:disabled) {
+  background: var(--surface-raised);
+}
+
+/* Map pins — electric charge markers */
 
 .map-pin {
   display: flex;
@@ -102,27 +140,37 @@ body {
   justify-content: center;
   min-width: 52px;
   padding: 6px 10px;
-  border: 2px solid #fff;
+  border: 2px solid rgba(255, 255, 255, 0.9);
   border-radius: 999px;
-  background: linear-gradient(135deg, #0d9488, #0891b2);
+  background: linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #06b6d4 100%);
   color: #fff;
   font-weight: 700;
   font-size: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.5),
+    0 0 20px var(--accent-glow);
   cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .map-pin--selected {
-  background: linear-gradient(135deg, #22d3ee, #06b6d4);
+  background: linear-gradient(135deg, #2ee6c5, #22d3ee);
+  color: #042f2e;
+  border-color: #fff;
   transform: scale(1.08);
   z-index: 2;
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.55),
+    0 0 28px var(--accent-glow);
 }
 
 .map-pin-price {
   white-space: nowrap;
 }
 
-/* Session banner — floating card over map */
+/* Session banner — live charging HUD */
 
 .session-banner {
   position: absolute;
@@ -135,10 +183,13 @@ body {
   align-items: stretch;
   padding: 12px;
   border-radius: 16px;
-  background: rgba(15, 23, 42, 0.94);
-  border: 1px solid rgba(34, 211, 238, 0.35);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-glow);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(46, 230, 197, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .session-banner-tap {
@@ -159,19 +210,25 @@ body {
   height: 8px;
   border-radius: 50%;
   background: var(--success);
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  box-shadow: 0 0 8px var(--success-glow);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+    box-shadow:
+      0 0 8px var(--success-glow),
+      0 0 0 0 rgba(52, 211, 153, 0.5);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    box-shadow:
+      0 0 8px var(--success-glow),
+      0 0 0 10px rgba(52, 211, 153, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    box-shadow:
+      0 0 8px var(--success-glow),
+      0 0 0 0 rgba(52, 211, 153, 0);
   }
 }
 
@@ -188,20 +245,20 @@ body {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #94a3b8;
+  color: var(--accent);
 }
 
 .session-banner-title {
   margin: 4px 0 0;
   font-size: 1rem;
   font-weight: 600;
-  color: #f8fafc;
+  color: var(--text);
 }
 
 .session-banner-total {
   margin: 8px 0 0 16px;
   font-size: 0.9rem;
-  color: #cbd5e1;
+  color: var(--text-muted);
 }
 
 .session-banner-cta {
@@ -218,13 +275,14 @@ body {
   z-index: 12;
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(127, 29, 29, 0.92);
-  border: 1px solid #ef4444;
+  background: rgba(69, 10, 10, 0.92);
+  border: 1px solid rgba(248, 113, 113, 0.5);
   color: #fecaca;
   font-size: 0.9rem;
+  backdrop-filter: blur(12px);
 }
 
-/* Bottom sheet — 21st-style drawer */
+/* Bottom sheet — dark cockpit drawer */
 
 .bottom-sheet {
   position: absolute;
@@ -237,7 +295,10 @@ body {
   background: var(--sheet-bg);
   color: var(--sheet-text);
   border-radius: 24px 24px 0 0;
-  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.35);
+  border-top: 1px solid var(--border-strong);
+  box-shadow:
+    0 -16px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition: height 0.32s cubic-bezier(0.32, 0.72, 0, 1);
   padding-bottom: var(--safe-bottom);
 }
@@ -270,7 +331,7 @@ body {
   height: 4px;
   margin: 0 auto;
   border-radius: 999px;
-  background: #cbd5e1;
+  background: var(--text-dim);
 }
 
 .bottom-sheet-content {
@@ -294,10 +355,14 @@ body {
   font-size: 0.92rem;
 }
 
+.sheet-peek-sub strong {
+  color: var(--accent);
+}
+
 .sheet-peek-hint {
   margin: 10px 0 0;
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-dim);
 }
 
 .sheet-list-title {
@@ -320,14 +385,20 @@ body {
   text-align: left;
   padding: 14px;
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
   cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .station-list-item--selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+  border-color: var(--accent-dark);
+  box-shadow:
+    0 0 0 1px var(--border-glow),
+    0 4px 20px rgba(46, 230, 197, 0.08);
 }
 
 .station-list-item-top {
@@ -346,7 +417,7 @@ body {
 .station-list-item-price {
   margin: 8px 0 0;
   font-weight: 700;
-  color: var(--accent-dark);
+  color: var(--accent);
 }
 
 .station-list-item-cta {
@@ -357,7 +428,7 @@ body {
 .station-list-item-hint {
   margin: 10px 0 0;
   font-size: 0.85rem;
-  color: var(--accent-dark);
+  color: var(--accent-blue);
 }
 
 /* Station detail */
@@ -365,7 +436,7 @@ body {
 .station-detail-back {
   border: none;
   background: none;
-  color: var(--accent-dark);
+  color: var(--accent);
   font-weight: 600;
   padding: 0;
   margin-bottom: 8px;
@@ -387,33 +458,38 @@ body {
   gap: 10px;
   align-items: center;
   margin-bottom: 16px;
+  color: var(--text-muted);
 }
 
 .price-hero {
   padding: 16px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #ecfeff, #f0fdfa);
-  border: 1px solid #a5f3fc;
+  background: linear-gradient(145deg, rgba(46, 230, 197, 0.08), rgba(56, 189, 248, 0.05));
+  border: 1px solid var(--border-glow);
   margin-bottom: 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 24px rgba(46, 230, 197, 0.06);
 }
 
 .price-hero-value {
   font-size: 2rem;
   font-weight: 800;
-  color: #0e7490;
+  color: var(--accent-bright);
   letter-spacing: -0.03em;
+  text-shadow: 0 0 24px var(--accent-glow);
 }
 
 .price-hero-unit {
   font-size: 1rem;
-  color: #0e7490;
+  color: var(--accent);
   margin-left: 4px;
 }
 
 .price-hero-note {
   margin: 8px 0 0;
   font-size: 0.82rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .station-detail-cta {
@@ -435,38 +511,46 @@ body {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: #e2e8f0;
-  color: #475569;
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 
 .badge-available {
-  background: #d1fae5;
-  color: #047857;
+  background: rgba(52, 211, 153, 0.12);
+  color: var(--success);
+  border-color: rgba(52, 211, 153, 0.35);
 }
 
 .badge-charging {
-  background: #fef3c7;
-  color: #b45309;
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--warning);
+  border-color: rgba(251, 191, 36, 0.35);
 }
 
 .badge-down {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.35);
 }
 
 .badge-active {
-  background: #cffafe;
-  color: #0e7490;
+  background: rgba(46, 230, 197, 0.12);
+  color: var(--accent);
+  border-color: var(--border-glow);
+  box-shadow: 0 0 12px rgba(46, 230, 197, 0.15);
 }
 
 .badge-completed {
-  background: #d1fae5;
-  color: #047857;
+  background: rgba(52, 211, 153, 0.12);
+  color: var(--success);
+  border-color: rgba(52, 211, 153, 0.35);
 }
 
 .badge-failed {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.35);
 }
 
 .btn {
@@ -478,7 +562,8 @@ body {
   cursor: pointer;
   transition:
     opacity 0.15s,
-    transform 0.15s;
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 
 .btn:active:not(:disabled) {
@@ -486,24 +571,46 @@ body {
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #22d3ee, #0891b2);
+  background: linear-gradient(135deg, var(--accent-bright), var(--accent-dark));
   color: #042f2e;
+  box-shadow:
+    0 4px 16px rgba(46, 230, 197, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.btn-primary:not(:disabled):hover {
+  box-shadow:
+    0 6px 24px rgba(46, 230, 197, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .btn-danger {
-  background: var(--danger);
+  background: linear-gradient(135deg, #f87171, #dc2626);
   color: #fff;
+  box-shadow: 0 4px 16px rgba(248, 113, 113, 0.25);
 }
 
 .btn-secondary,
 .btn-ghost {
-  background: #e2e8f0;
-  color: var(--sheet-text);
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* MapLibre controls — match dark theme */
+.maplibregl-ctrl-group {
+  background: var(--surface-overlay) !important;
+  border: 1px solid var(--border-strong) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+.maplibregl-ctrl-group button {
+  filter: invert(1) brightness(0.9);
 }
 
 @media (min-width: 768px) {
@@ -513,6 +620,7 @@ body {
     max-width: 480px;
     border-radius: 24px;
     bottom: 16px;
+    border: 1px solid var(--border-strong);
   }
 
   .bottom-sheet--peek {

@@ -21,21 +21,21 @@ async function seed() {
   const stationRows = [
     {
       cpoId,
-      ocpiLocationId: 'loc-milano-centro',
+      ocpiLocationId: 'loc-catania-duomo',
       name: 'Hub Duomo',
       address: 'Piazza del Duomo',
-      city: 'Milano',
-      latitude: 45.4642,
-      longitude: 9.19,
+      city: 'Catania',
+      latitude: 37.5079,
+      longitude: 15.083,
     },
     {
       cpoId,
-      ocpiLocationId: 'loc-milano-navigli',
-      name: 'Navigli Charge',
-      address: 'Alzaia Naviglio Grande 12',
-      city: 'Milano',
-      latitude: 45.4481,
-      longitude: 9.1762,
+      ocpiLocationId: 'loc-catania-porto',
+      name: 'Porto Charge',
+      address: 'Via Cardinale Dusmet 2',
+      city: 'Catania',
+      latitude: 37.5028,
+      longitude: 15.0962,
     },
   ];
 

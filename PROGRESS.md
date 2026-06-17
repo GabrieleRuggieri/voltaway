@@ -28,7 +28,7 @@ feature/*  →  develop  →  main
 | Monorepo pnpm + Turbo | ✅ | build + test + format |
 | Docker Compose (tutto insieme) | ✅ | `docker compose up -d --build` |
 | `packages/core` | ✅ | motore prezzo all-in + test |
-| `packages/ocpi` + `ocpi-sim` | ✅ | OCPI 2.2.1 simulato Milano |
+| `packages/ocpi` + `ocpi-sim` | ✅ | OCPI 2.2.1 simulato Catania |
 | `packages/db` | ✅ | schema + migrazioni |
 | `apps/api` | ✅ | stations, sessions, WebSocket, BullMQ scheduler |
 | `apps/worker` | ✅ | sync disponibilità via BullMQ |
