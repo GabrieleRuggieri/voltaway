@@ -1,4 +1,4 @@
-import type { EvseStatus } from '@voltaway/core';
+import type { EvseStatus } from './types.js';
 import type { OcpiCdr, OcpiLocation, OcpiTariff, SessionRef } from './types.js';
 
 interface ActiveSession extends SessionRef {

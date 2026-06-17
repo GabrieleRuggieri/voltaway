@@ -11,16 +11,16 @@ import {
 const app = express();
 app.use(express.json());
 
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', service: 'ocpi-sim' });
+});
+
 app.use((req, res, next) => {
   if (!isAuthorized(req.header('authorization') ?? undefined)) {
     res.status(401).json({ status_code: 2001, status_message: 'Unauthorized' });
     return;
   }
   next();
-});
-
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'ocpi-sim' });
 });
 
 app.get('/ocpi/2.2.1/locations', (_req, res) => {

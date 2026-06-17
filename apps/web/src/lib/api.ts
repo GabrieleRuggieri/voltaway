@@ -28,12 +28,24 @@ export type ChargingSession = {
   evseUid: string | null;
 };
 
-function apiBase(): string {
+export function publicApiBase(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? 'http://api.voltaway.localhost';
 }
 
+export function apiBase(): string {
+  if (typeof window === 'undefined') {
+    return process.env.API_INTERNAL_URL ?? publicApiBase();
+  }
+  return publicApiBase();
+}
+
+export function wsBase(): string {
+  const base = publicApiBase();
+  return base.replace(/^http/, 'ws');
+}
+
 export async function fetchStations(): Promise<StationMarker[]> {
-  const res = await fetch(`${apiBase()}/stations`, { next: { revalidate: 30 } });
+  const res = await fetch(`${apiBase()}/stations`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to load stations: ${res.status}`);
   const body = (await res.json()) as { data: StationMarker[] };
   return body.data;
@@ -43,7 +55,7 @@ export async function startSession(input: {
   ocpiLocationId: string;
   ocpiEvseUid: string;
 }): Promise<ChargingSession> {
-  const res = await fetch(`${apiBase()}/sessions`, {
+  const res = await fetch(`${publicApiBase()}/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -57,7 +69,7 @@ export async function startSession(input: {
 }
 
 export async function stopSession(sessionId: string): Promise<ChargingSession> {
-  const res = await fetch(`${apiBase()}/sessions/${sessionId}/stop`, { method: 'POST' });
+  const res = await fetch(`${publicApiBase()}/sessions/${sessionId}/stop`, { method: 'POST' });
   const body = (await res.json()) as { data?: ChargingSession; message?: string | string[] };
   if (!res.ok) {
     const msg = Array.isArray(body.message) ? body.message.join(', ') : body.message;
@@ -67,7 +79,7 @@ export async function stopSession(sessionId: string): Promise<ChargingSession> {
 }
 
 export async function fetchSession(sessionId: string): Promise<ChargingSession> {
-  const res = await fetch(`${apiBase()}/sessions/${sessionId}`);
+  const res = await fetch(`${publicApiBase()}/sessions/${sessionId}`);
   if (!res.ok) throw new Error(`Failed to load session: ${res.status}`);
   const body = (await res.json()) as { data: ChargingSession };
   return body.data;

@@ -194,7 +194,7 @@ Sintesi delle scelte. Razionale completo, diagrammi, modello dati e flussi in [`
 | Livello | Tecnologia | Note |
 |---|---|---|
 | Linguaggio | **TypeScript** (strict) ovunque | tipi condivisi tra web, mobile, api, worker |
-| Web | **Next.js** (App Router) + React + Tailwind + shadcn/ui | landing, mappa, dashboard flotte — in container (profilo `app`) |
+| Web | **Next.js** (App Router) + React + Tailwind + shadcn/ui | landing, mappa, dashboard flotte — in container |
 | Mobile | **Expo / React Native** | *fase successiva* — fuori scope attuale; per ora solo web |
 | Mappa | **MapLibre GL** + tiles **OpenStreetMap** (servizio esterno gratuito) | nessun accordo né costo; richiede connessione internet |
 | API | **NestJS** (REST + WebSocket gateway) | backend always-on |
@@ -236,12 +236,16 @@ Prerequisiti: **Docker** + **Docker Compose v2** (per stack completo), oppure **
 ```bash
 cp .env.example .env
 
-# Infrastruttura
-docker compose up -d
-
-# Stack applicativo (build + avvio)
-docker compose --profile app up -d --build
+# Stack completo (infra + ocpi-sim, api, worker, web)
+docker compose up -d --build
 ```
+
+**URL dopo l'avvio:**
+- Web app: http://localhost:3000
+- API health: http://localhost:3001/health
+- OCPI sim: http://localhost:4000/health
+- Mailpit: http://localhost:8025
+- Traefik dashboard: http://localhost:8080 (se i domini `*.voltaway.localhost` funzionano)
 
 **Sviluppo senza rebuild Docker** (con infra già su Compose):
 ```bash

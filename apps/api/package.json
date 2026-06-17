@@ -18,6 +18,7 @@
     "@voltaway/db": "workspace:*",
     "@voltaway/ocpi": "workspace:*",
     "drizzle-orm": "^0.44.2",
+    "bullmq": "^5.56.0",
     "ioredis": "^5.6.1",
     "postgres": "^3.4.7",
     "reflect-metadata": "^0.2.2",

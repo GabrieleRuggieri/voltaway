@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import postgres from 'postgres';
 import { createDb, stations } from '@voltaway/db';
 import { AppModule } from './app.module';
@@ -53,6 +54,7 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(AppModule);
+  app.useWebSocketAdapter(new IoAdapter(app));
   app.enableCors({ origin: true, credentials: true });
   const port = Number(process.env.PORT ?? 3001);
   await app.listen(port, '0.0.0.0');

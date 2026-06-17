@@ -10,7 +10,6 @@
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@voltaway/core": "workspace:*",
     "express": "^5.1.0"
   },
   "devDependencies": {

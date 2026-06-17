@@ -3,7 +3,9 @@ RUN corepack enable && corepack prepare pnpm@10.12.1 --activate
 WORKDIR /app
 
 FROM base AS build
-COPY . .
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc tsconfig.base.json ./
+COPY packages/config ./packages/config
+COPY apps/web ./apps/web
 RUN pnpm install --frozen-lockfile || pnpm install
 ARG NEXT_PUBLIC_API_URL=http://api.voltaway.localhost
 ARG NEXT_PUBLIC_MAP_TILES_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png
@@ -12,6 +14,7 @@ ENV NEXT_PUBLIC_MAP_TILES_URL=$NEXT_PUBLIC_MAP_TILES_URL
 RUN pnpm --filter @voltaway/web build
 
 FROM node:22-alpine AS runner
+RUN apk add --no-cache wget
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
@@ -19,4 +22,6 @@ COPY --from=build /app/apps/web/.next/standalone ./
 COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=build /app/apps/web/public ./apps/web/public
 EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=5s --retries=6 \
+  CMD wget -qO- http://127.0.0.1:3000/ || exit 1
 CMD ["node", "apps/web/server.js"]

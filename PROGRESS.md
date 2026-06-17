@@ -1,27 +1,16 @@
 # Voltaway — Registro di avanzamento
 
-File di **controllo del lavoro svolto** e dello **stato del progetto**. Aggiornarlo a ogni sessione significativa.
-
-**Ultimo aggiornamento:** 2026-06-16 (sessioni ricarica)
+**Ultimo aggiornamento:** 2026-06-17
 
 ---
 
 ## Branching e workflow Git
 
-### Branch permanenti
-
-| Branch | Scopo | Regola |
-|---|---|---|
-| `main` | **Stabile / rilasciabile** | Solo merge da `develop` quando tutto funziona |
-| `develop` | **Integrazione** | Branch predefinito; merge delle feature qui |
-
-### Branch di lavoro
-
-| Branch | Stato | Note |
-|---|---|---|
-| `feature/scaffold-monorepo` | **in corso** | monorepo + app base + Docker |
-
-### Flusso
+| Branch | Scopo |
+|---|---|
+| `main` | Stabile / rilasciabile |
+| `develop` | Integrazione |
+| `feature/scaffold-monorepo` | Monorepo + demo E2E |
 
 ```text
 feature/*  →  develop  →  main
@@ -33,97 +22,75 @@ feature/*  →  develop  →  main
 
 | Area | Stato | Note |
 |---|---|---|
-| Documentazione prodotto | ✅ | `README.md` |
-| Architettura tecnica | ✅ | `ARCHITECTURE.md` |
-| Infrastruttura Docker | ✅ | `docker-compose.yml` profili default + app |
-| Config Keycloak | ✅ | `infra/keycloak/realm/` |
-| Monorepo pnpm + Turbo | ✅ | `package.json`, `pnpm-workspace.yaml`, `turbo.json` |
-| `packages/core` | ✅ | motore prezzo all-in + test Vitest |
-| `packages/ocpi` | ✅ | tipi + `OcpiClient` |
-| `packages/db` | ✅ | schema Drizzle + migrazione `0000_init.sql` |
-| `apps/ocpi-sim` | ✅ | simulatore OCPI 2.2.1 (Milano seed) |
-| `apps/api` | ✅ | NestJS: `/health`, `/stations`, `/sessions` (start/stop), seed+migrate all'avvio |
-| `apps/worker` | ✅ | sync disponibilità periodico → API |
-| `apps/web` | ✅ | Next.js mappa MapLibre + lista stazioni + avvio/stop ricarica demo |
-| Build locale (`pnpm build`) | ✅ | tutti i package/app compilano |
-| Docker `profile app` | ⏳ | da verificare con Docker Desktop avviato |
-| CI GitHub Actions | ⏳ | |
-| Sessioni ricarica (OCPI, no Stripe) | ✅ | `POST /sessions`, `POST /sessions/:id/stop`, quote persistita |
-| Integrazione Stripe test mode | ⏳ | prossima milestone |
+| Monorepo pnpm + Turbo | ✅ | build + test + format |
+| Docker Compose (tutto insieme) | ✅ | `docker compose up -d --build` |
+| `packages/core` | ✅ | motore prezzo all-in + test |
+| `packages/ocpi` + `ocpi-sim` | ✅ | OCPI 2.2.1 simulato Milano |
+| `packages/db` | ✅ | schema + migrazioni |
+| `apps/api` | ✅ | stations, sessions, WebSocket, BullMQ scheduler |
+| `apps/worker` | ✅ | sync disponibilità via BullMQ |
+| `apps/web` | ✅ | mappa, UI premium, ricarica live |
+| CI GitHub Actions | ✅ | `.github/workflows/ci.yml` |
+| Sessioni ricarica OCPI | ✅ | start/stop + CDR + quote |
+| WebSocket sessioni | ✅ | namespace `/sessions` |
+| Stripe test mode | ⏳ | prossima milestone |
+| Keycloak login nell'app | ⏳ | realm pronto, UI non collegata |
 | Mobile | ⏳ | fuori scope |
 
 ---
 
-## Cronologia lavoro
+## Avvio locale (verificato)
 
-### 2026-06-16 — Setup repository e architettura
-
-**`d255663`** — initial repo (README, architettura Netlify)  
-**`c5c8ec7`** — refactor Docker Compose production stack  
-**`f784825`** / **`41a76a3`** — branch `develop` + `PROGRESS.md`
-
-### 2026-06-16 — Scaffold monorepo e app base (`feature/scaffold-monorepo`)
-
-- Monorepo **pnpm workspaces + Turborepo**
-- **`packages/core`**: `computeAllInPrice`, test Vitest (2 test)
-- **`packages/ocpi`**: interfaccia + client HTTP OCPI 2.2.1
-- **`packages/db`**: Postgres schema (`cpos`, `stations`, `evses`, `sessions`), migrazione SQL
-- **`apps/ocpi-sim`**: Express, endpoint OCPI, 2 location Milano, tariffe simulate
-- **`apps/api`**: NestJS, migrazioni+seed all'avvio, `GET /stations` con prezzo all-in, `GET /stations/sync`
-- **`apps/worker`**: polling sync ogni 60s
-- **`apps/web`**: landing + mappa MapLibre + card stazioni
-- Dockerfile per ogni app (build da root monorepo)
-- `docker-compose.yml`: dipendenze `api`/`worker`/`web` → `ocpi-sim`
-
-**Verifica locale eseguita:**
-```bash
-pnpm install
-pnpm --filter @voltaway/core test   # 2 passed
-pnpm build                          # tutti i package OK
-```
-
-### 2026-06-16 — Sessioni ricarica (`feature/scaffold-monorepo`)
-
-- **`POST /sessions`**: quote all-in persistita, avvio OCPI `START_SESSION`, stato `ACTIVE`
-- **`POST /sessions/:id/stop`**: stop OCPI, ingestione CDR, totale finale (CPO + fee Voltaway)
-- **`GET /sessions/:id`**: dettaglio sessione
-- Migrazione `0001_sessions_settlement.sql` (`final_kwh`, `final_total`, `failure_reason`)
-- Web: pulsanti **Avvia ricarica** / **Ferma ricarica** con pannello sessione live
-- Stripe e auth **non ancora** inclusi (flusso demo senza pagamento)
-
-**Verifica locale eseguita:**
-```bash
-pnpm install
-pnpm --filter @voltaway/core test   # 2 passed
-pnpm build                          # tutti i package OK
-```
-
-**Verifica Docker (da fare con Docker avviato):**
 ```bash
 cp .env.example .env
-docker compose up -d
-docker compose --profile app up -d --build
-# app.voltaway.localhost  → web
-# api.voltaway.localhost/health  → api
-# ocpi.voltaway.localhost/health → ocpi-sim
+docker compose up -d --build
 ```
+
+**URL principali:**
+- Web: http://localhost:3000
+- API: http://localhost:3001/health
+- OCPI sim: http://localhost:4000/health
+- Keycloak: http://auth.voltaway.localhost (via Traefik, se attivo)
+- Mailpit: http://localhost:8025
+
+> Traefik (`*.voltaway.localhost`) può richiedere Docker Desktop funzionante; le porte dirette `3000`/`3001` funzionano sempre.
+
+---
+
+## Cronologia
+
+### 2026-06-17 — Production-ready local demo
+
+- Docker build fix (tsconfig, package exports, healthcheck ocpi-sim)
+- `docker compose up` avvia **tutto** senza profili
+- WebSocket sessioni live (`SessionsGateway`)
+- BullMQ: API schedula `availability.sync`, worker consuma
+- UI rifatta (DM Sans, badge stato, pannello sessione)
+- CI: build + test + format check
+- Porte esposte 3000/3001/4000 per accesso diretto
+
+### 2026-06-16 — Sessioni ricarica
+
+- `POST /sessions`, `POST /sessions/:id/stop`, quote persistita
+- Web: avvio/stop ricarica
+
+### 2026-06-16 — Scaffold monorepo
+
+- Monorepo completo, app base, Prettier
 
 ---
 
 ## Prossimi passi
 
-- [ ] Verificare `docker compose --profile app up -d --build` con Docker Desktop
+- [ ] Stripe test mode (PaymentIntent + webhook)
+- [ ] Keycloak OIDC nella web app
 - [ ] Merge `feature/scaffold-monorepo` → `develop`
-- [x] `POST /sessions` — avvio/stop ricarica via OCPI + quote persistita
-- [ ] Integrazione Stripe test mode (SetupIntent / PaymentIntent)
-- [ ] WebSocket stato sessione live
-- [ ] CI GitHub Actions (build + test)
-- [ ] Merge `develop` → `main` quando E2E locale OK
+- [ ] Test E2E Playwright
+- [ ] PostGIS `geography` per query bbox
 
 ---
 
-## Riferimenti rapidi
+## Riferimenti
 
-- [`README.md`](./README.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`docker-compose.yml`](./docker-compose.yml)
-- Dev locale senza Docker app: `pnpm install && pnpm --filter @voltaway/ocpi-sim dev` (+ api, web in parallelo)
-- Repo: https://github.com/GabrieleRuggieri/voltaway
+- [`README.md`](./README.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+- Dev senza Docker app: `pnpm install && pnpm --filter @voltaway/ocpi-sim dev` (+ api, web)

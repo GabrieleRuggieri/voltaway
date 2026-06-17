@@ -1,4 +1,4 @@
-export type { EvseStatus } from '@voltaway/core';
+export type EvseStatus = 'AVAILABLE' | 'CHARGING' | 'BLOCKED' | 'OUTOFORDER' | 'UNKNOWN';
 
 export interface OcpiConnector {
   id: string;
@@ -12,7 +12,7 @@ export interface OcpiConnector {
 export interface OcpiEvse {
   uid: string;
   evse_id: string;
-  status: import('@voltaway/core').EvseStatus;
+  status: EvseStatus;
   connectors: OcpiConnector[];
   max_power_kw: number;
   tariff_id?: string;

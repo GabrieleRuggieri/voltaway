@@ -12,6 +12,7 @@
 .env.*
 !.env.example
 **/.DS_Store
-docker-compose.yml
-README.md
-ARCHITECTURE.md
+.pnpm-store
+**/.pnpm-store
+PROGRESS.md
+agent-transcripts

@@ -2,7 +2,7 @@
 
 Architettura **production-grade** dell'eMSP Voltaway (vedi [`README.md`](./README.md)), eseguibile in locale via **Docker Compose**.
 
-> **Fase attuale.** Il repository contiene **documentazione + infrastruttura Docker**; lo sviluppo applicativo (`apps/*`) inizierà più avanti. Oggi `docker compose up -d` avvia l'infra completa (Postgres, Redis, Keycloak, MinIO, Mailpit, Traefik).
+> **Fase attuale.** Il repository contiene documentazione, infrastruttura Docker e monorepo applicativo (`apps/*`, `packages/*`). `docker compose up -d --build` avvia lo stack completo (infra + api, worker, web, ocpi-sim).
 >
 > **Obiettivo.** Lo stack è quello dell'app vera e propria: backend dedicato always-on, Postgres+PostGIS, Redis, code, realtime, IdP self-hosted, object storage, gateway. I servizi **nostri** girano in container; i **servizi esterni sono ammessi solo se gratuiti** (Stripe test mode, tile OpenStreetMap).
 >
@@ -397,13 +397,10 @@ Quando inizierà lo sviluppo applicativo: **Node.js 22 LTS**, **pnpm**, account 
 cp .env.example .env
 #    Compila STRIPE_* quando svilupperai l'app (account Stripe gratuito → Developers → API keys test)
 
-# 1. infrastruttura — funziona già ora, senza codice app
-docker compose up -d                       # postgres, redis, keycloak, minio, mailpit, traefik
+# 1. stack completo (infra + app)
+docker compose up -d --build                 # postgres, redis, keycloak, minio, mailpit, traefik, api, worker, web, ocpi-sim
 
-# 2. stack applicativo — dopo lo scaffold di apps/*
-docker compose --profile app up -d --build # + api, worker, web, ocpi-sim
-
-# 3. osservabilità (opzionale)
+# 2. osservabilità (opzionale)
 docker compose --profile obs up -d         # Grafana OTel LGTM
 
 # 4. webhook Stripe (quando l'app esiste) — Stripe CLI sull'host, gratuita

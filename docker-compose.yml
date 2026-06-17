@@ -1,19 +1,15 @@
-# Voltaway — stack di produzione in Docker Compose (locale).
+# Voltaway — stack completo in Docker Compose (locale).
 #
-# Politica locale (vedi ARCHITECTURE.md §2):
-#   - Servizi nostri → container Compose
-#   - Servizi esterni → solo se gratuiti (Stripe test, tile OSM)
-#   - Nessun accordo CPO/hub/PSP reale; codice app non ancora scaffoldato
+# Avvio:
+#   cp .env.example .env
+#   docker compose up -d --build
 #
-# Profili:
-#   (default)  infra: parte subito anche senza codice app
-#              -> docker compose up -d
-#   app        servizi applicativi (richiedono lo scaffold di apps/*)
-#              -> docker compose --profile app up -d --build
-#   obs        osservabilita (Grafana OTel LGTM all-in-one)
-#              -> docker compose --profile obs up -d
-#
-# I domini *.voltaway.localhost risolvono a 127.0.0.1 nei browser moderni.
+# URL principali:
+#   http://app.voltaway.localhost   — web app
+#   http://api.voltaway.localhost   — API REST + WebSocket /sessions
+#   http://auth.voltaway.localhost  — Keycloak
+#   http://mail.voltaway.localhost  — Mailpit
+#   http://minio.voltaway.localhost — MinIO console
 
 name: voltaway
 
@@ -33,29 +29,23 @@ x-app-environment: &app-environment
   SMTP_PORT: '1025'
   STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
   STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://observability:4318}
 
 services:
-  # ----------------------------------------------------------------------
-  # Gateway
-  # ----------------------------------------------------------------------
   traefik:
     image: traefik:v3.1
     command:
       - --api.insecure=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=voltaway
       - --entrypoints.web.address=:80
     ports:
       - '80:80'
-      - '8080:8080' # dashboard Traefik
+      - '8080:8080'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks: [voltaway]
 
-  # ----------------------------------------------------------------------
-  # Dati
-  # ----------------------------------------------------------------------
   postgres:
     image: postgis/postgis:16-3.4
     environment:
@@ -87,9 +77,6 @@ services:
       retries: 12
     networks: [voltaway]
 
-  # ----------------------------------------------------------------------
-  # Auth (Keycloak in dev mode, realm importato all'avvio)
-  # ----------------------------------------------------------------------
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     command: ['start-dev', '--import-realm']
@@ -101,15 +88,18 @@ services:
     volumes:
       - ./infra/keycloak/realm:/opt/keycloak/data/import:ro
       - kcdata:/opt/keycloak/data
+    healthcheck:
+      test: ['CMD-SHELL', 'exec 3<>/dev/tcp/127.0.0.1/8080']
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
     labels:
       - traefik.enable=true
       - traefik.http.routers.auth.rule=Host(`auth.voltaway.localhost`)
       - traefik.http.services.auth.loadbalancer.server.port=8080
     networks: [voltaway]
 
-  # ----------------------------------------------------------------------
-  # Object storage (S3-compatibile)
-  # ----------------------------------------------------------------------
   minio:
     image: minio/minio:latest
     command: ['server', '/data', '--console-address', ':9001']
@@ -118,11 +108,11 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-voltaway-secret}
     ports:
       - '9000:9000'
-      - '9001:9001' # console web
+      - '9001:9001'
     volumes:
       - miniodata:/data
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
       interval: 10s
       timeout: 5s
       retries: 6
@@ -132,39 +122,53 @@ services:
       - traefik.http.services.minio.loadbalancer.server.port=9001
     networks: [voltaway]
 
-  # ----------------------------------------------------------------------
-  # Email di test
-  # ----------------------------------------------------------------------
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-voltaway} ${MINIO_ROOT_PASSWORD:-voltaway-secret} &&
+      mc mb --ignore-existing local/${S3_BUCKET:-voltaway} &&
+      echo 'bucket ready'
+      "
+    networks: [voltaway]
+
   mailpit:
     image: axllent/mailpit:latest
     ports:
-      - '1025:1025' # SMTP
-      - '8025:8025' # web UI
+      - '1025:1025'
+      - '8025:8025'
     labels:
       - traefik.enable=true
       - traefik.http.routers.mail.rule=Host(`mail.voltaway.localhost`)
       - traefik.http.services.mail.loadbalancer.server.port=8025
     networks: [voltaway]
 
-  # ----------------------------------------------------------------------
-  # Servizi applicativi (profilo "app" — richiedono lo scaffold di apps/*)
-  # ----------------------------------------------------------------------
   ocpi-sim:
-    profiles: ['app']
     build:
       context: .
       dockerfile: apps/ocpi-sim/Dockerfile
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: '4000'
+      OCPI_TOKEN: ${OCPI_TOKEN:-sim-token}
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:4000/health']
+      interval: 10s
+      timeout: 5s
+      retries: 6
     labels:
       - traefik.enable=true
+      - traefik.docker.network=voltaway
       - traefik.http.routers.ocpi.rule=Host(`ocpi.voltaway.localhost`)
       - traefik.http.services.ocpi.loadbalancer.server.port=4000
+    ports:
+      - '4000:4000'
     networks: [voltaway]
 
   api:
-    profiles: ['app']
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -177,15 +181,23 @@ services:
       redis:
         condition: service_healthy
       ocpi-sim:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/health']
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     labels:
       - traefik.enable=true
+      - traefik.docker.network=voltaway
       - traefik.http.routers.api.rule=Host(`api.voltaway.localhost`)
       - traefik.http.services.api.loadbalancer.server.port=3001
+    ports:
+      - '3001:3001'
     networks: [voltaway]
 
   worker:
-    profiles: ['app']
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
@@ -198,45 +210,41 @@ services:
       redis:
         condition: service_healthy
       api:
-        condition: service_started
+        condition: service_healthy
       ocpi-sim:
-        condition: service_started
+        condition: service_healthy
     networks: [voltaway]
 
   web:
-    profiles: ['app']
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3001
+        NEXT_PUBLIC_MAP_TILES_URL: ${NEXT_PUBLIC_MAP_TILES_URL:-https://tile.openstreetmap.org/{z}/{x}/{y}.png}
     environment:
-      NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://api.voltaway.localhost
+      NODE_ENV: production
+      API_INTERNAL_URL: http://api:3001
+      NEXT_PUBLIC_API_URL: http://localhost:3001
       NEXT_PUBLIC_OIDC_ISSUER_URL: http://auth.voltaway.localhost/realms/voltaway
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
       NEXT_PUBLIC_MAP_TILES_URL: ${NEXT_PUBLIC_MAP_TILES_URL:-https://tile.openstreetmap.org/{z}/{x}/{y}.png}
     depends_on:
-      - api
-      - ocpi-sim
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/']
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
     labels:
       - traefik.enable=true
+      - traefik.docker.network=voltaway
       - traefik.http.routers.web.rule=Host(`app.voltaway.localhost`)
       - traefik.http.services.web.loadbalancer.server.port=3000
-    networks: [voltaway]
-
-  # ----------------------------------------------------------------------
-  # Osservabilita (profilo "obs" — Loki/Grafana/Tempo/Prometheus in un container)
-  # ----------------------------------------------------------------------
-  observability:
-    profiles: ['obs']
-    image: grafana/otel-lgtm:latest
     ports:
-      - '3000:3000' # Grafana
-      - '4317:4317' # OTLP gRPC
-      - '4318:4318' # OTLP HTTP
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.grafana.rule=Host(`grafana.voltaway.localhost`)
-      - traefik.http.services.grafana.loadbalancer.server.port=3000
+      - '3000:3000'
     networks: [voltaway]
 
 networks:
