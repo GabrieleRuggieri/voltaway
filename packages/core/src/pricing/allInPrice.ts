@@ -1,3 +1,12 @@
+/**
+ * @file allInPrice.ts
+ * @module @voltaway/core
+ *
+ * Scopo: Calcola il prezzo all-in (CPO + fee Voltaway) per una sessione di ricarica stimata.
+ * Flusso: Riceve tariffa CPO, policy fee e stima kWh/minuti → restituisce quote con breakdown.
+ * Dipendenze: Tipi da ../types.js.
+ */
+
 import type {
   AllInQuote,
   CpoTariff,
@@ -16,6 +25,7 @@ function componentCost(
     if (item.type === 'ENERGY') return sum + item.price * estimate.kWh;
     if (item.type === 'TIME' || item.type === 'PARKING_TIME') {
       const step = item.stepSize ?? 1;
+      // Arrotonda per eccesso ai blocchi tariffari (es. ogni 15 minuti)
       const units = Math.ceil(estimate.minutes / step);
       return sum + item.price * units;
     }
@@ -41,6 +51,7 @@ export function computeAllInPrice(input: {
     voltawayFee.type === 'percent' ? feeBase * (voltawayFee.value / 100) : voltawayFee.value;
 
   const totalEstimate = subtotal + voltawayFeeAmount;
+  // Evita divisione per zero quando kWh stimati è 0
   const allInPerKwh = estimate.kWh > 0 ? totalEstimate / estimate.kWh : totalEstimate;
 
   return {

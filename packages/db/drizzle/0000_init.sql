@@ -1,3 +1,19 @@
+-- =============================================================================
+-- Voltaway — migrazione iniziale schema database (0000_init)
+-- =============================================================================
+--
+-- Scopo:
+--   Creare lo schema relazionale di base per CPO, stazioni, EVSE e sessioni
+--   di ricarica, con enum di stato e vincoli di integrità referenziale.
+--
+-- Componenti:
+--   Enum: evse_status, session_status
+--   Tabelle: cpos → stations → evses → sessions (catena FK dal CPO alla sessione)
+--
+-- Flusso dev:
+--   Generata da Drizzle ORM; applicata con `pnpm db:migrate` (o equivalente).
+--   Eseguita una sola volta su DB vuoto; migrazioni successive in 0001_*, …
+--
 CREATE TYPE "public"."evse_status" AS ENUM('AVAILABLE', 'CHARGING', 'BLOCKED', 'OUTOFORDER', 'UNKNOWN');--> statement-breakpoint
 CREATE TYPE "public"."session_status" AS ENUM('QUOTED', 'AUTHORIZING', 'STARTING', 'ACTIVE', 'STOPPING', 'SETTLING', 'COMPLETED', 'FAILED');--> statement-breakpoint
 CREATE TABLE "cpos" (

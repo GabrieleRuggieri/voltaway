@@ -1,3 +1,12 @@
+/**
+ * @file store.ts
+ * @module @voltaway/ocpi-sim
+ *
+ * Scopo: Store in-memory con dati CPO simulati (location Catania, tariffe, sessioni, CDR).
+ * Flusso: startSession → EVSE CHARGING → stopSession → calcolo CDR sintetico → EVSE AVAILABLE.
+ * Dipendenze: ./types.js.
+ */
+
 import type { EvseStatus } from './types.js';
 import type { OcpiCdr, OcpiLocation, OcpiTariff, SessionRef } from './types.js';
 
@@ -184,6 +193,7 @@ export function stopSession(sessionId: string): OcpiCdr {
   if (!session) throw new Error('Session not found');
 
   const minutes = Math.max(1, Math.round((Date.now() - session.startedAt.getTime()) / 60000));
+  // Stima sintetica: ~0.8 kWh/min per simulare una ricarica rapida
   const kWh = Math.max(2, Math.round(minutes * 0.8 * 10) / 10);
   session.kWhDelivered = kWh;
 

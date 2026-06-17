@@ -1,3 +1,11 @@
+/**
+ * @file api.ts
+ * @module @voltaway/web
+ *
+ * Scopo: client HTTP per colonnine e sessioni di ricarica; tipi condivisi.
+ * Flusso: web → API REST (/stations, /sessions) → backend Voltaway.
+ * Dipendenze: variabili env NEXT_PUBLIC_API_URL, API_INTERNAL_URL.
+ */
 export type StationMarker = {
   id: string;
   ocpiLocationId: string;
@@ -32,6 +40,7 @@ export function publicApiBase(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? 'http://api.voltaway.localhost';
 }
 
+/** SSR usa URL interno; browser usa endpoint pubblico esposto al client. */
 export function apiBase(): string {
   if (typeof window === 'undefined') {
     return process.env.API_INTERNAL_URL ?? publicApiBase();

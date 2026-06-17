@@ -1,3 +1,12 @@
+/**
+ * @file db.module.ts
+ * @module @voltaway/api
+ *
+ * Scopo: Fornisce globalmente l'istanza Drizzle del database tramite token di injection DB.
+ * Flusso: app.module → db.module → @voltaway/db (Postgres)
+ * Dipendenze: @nestjs/common, @voltaway/db (createDb)
+ * Endpoint / export principali: DB (Symbol), DbModule
+ */
 import { Global, Module } from '@nestjs/common';
 import { createDb, type Db } from '@voltaway/db';
 

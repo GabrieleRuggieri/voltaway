@@ -1,3 +1,12 @@
+/**
+ * @file main.ts
+ * @module @voltaway/worker
+ *
+ * Scopo: Worker BullMQ che esegue periodicamente la sincronizzazione disponibilità EVSE da OCPI.
+ * Flusso: api (QueueService) → Redis → worker → ocpi + GET api/stations/sync
+ * Dipendenze: bullmq, @voltaway/ocpi, fetch verso API interna
+ * Endpoint / export principali: syncAvailability(), Worker 'voltaway'
+ */
 import { Worker } from 'bullmq';
 import { OcpiClient } from '@voltaway/ocpi';
 
@@ -10,6 +19,7 @@ const ocpi = new OcpiClient({
 });
 
 async function syncAvailability() {
+  // Warm-up OCPI (cache/locations) poi delega al endpoint sync dell'API
   await ocpi.getLocations();
   const res = await fetch(`${apiBase}/stations/sync`, { method: 'GET' });
   if (!res.ok) throw new Error(`sync failed: ${res.status}`);

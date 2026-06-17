@@ -1,3 +1,12 @@
+/**
+ * @file drizzle.config.ts
+ * @module @voltaway/db
+ *
+ * Scopo: Configurazione Drizzle Kit per generare migrazioni e introspezione schema.
+ * Flusso: Punta a schema.ts e cartella drizzle/; legge DATABASE_URL dall'ambiente.
+ * Dipendenze: drizzle-kit.
+ */
+
 import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({

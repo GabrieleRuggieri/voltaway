@@ -1,3 +1,11 @@
+/**
+ * @file card.tsx
+ * @module @voltaway/web
+ *
+ * Scopo: componenti Card shadcn-style con stile vetro per pannelli e liste.
+ * Flusso: composizione Card/Header/Content → UI colonnine e sessioni.
+ * Dipendenze: React, @/lib/utils.
+ */
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';

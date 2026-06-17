@@ -1,3 +1,12 @@
+/**
+ * @file types.ts
+ * @module @voltaway/core
+ *
+ * Scopo: Definisce i tipi condivisi del dominio Voltaway (tariffe, quote, geografia, stato EVSE).
+ * Flusso: Importati da pricing, API e client OCPI per garantire contratti tipizzati coerenti.
+ * Dipendenze: Nessuna (tipi puri TypeScript).
+ */
+
 export type TariffComponentType = 'ENERGY' | 'TIME' | 'FLAT' | 'PARKING_TIME';
 
 export interface TariffComponent {
@@ -15,6 +24,7 @@ export interface CpoTariff {
 export interface FeePolicy {
   type: 'percent' | 'flat';
   value: number;
+  /** Sconto premium applicato al subtotale CPO prima del calcolo fee Voltaway */
   premiumDiscountPercent?: number;
 }
 
@@ -45,6 +55,7 @@ export interface GeoPoint {
   lng: number;
 }
 
+/** Rettangolo geografico per filtrare location OCPI per area mappa */
 export interface BoundingBox {
   minLat: number;
   minLng: number;

@@ -1,3 +1,12 @@
+/**
+ * @file main.ts
+ * @module @voltaway/api
+ *
+ * Scopo: Punto di ingresso dell'API NestJS: esegue migrazioni DB, seed iniziale e avvia il server HTTP/WebSocket.
+ * Flusso: web → api (bootstrap) → db (migrazioni/seed) → moduli REST/WS
+ * Dipendenze: @nestjs/core, @voltaway/db, app.module, seed
+ * Endpoint / export principali: bootstrap(), runMigrations()
+ */
 import 'reflect-metadata';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -27,6 +36,7 @@ async function runMigrations() {
       .sort();
 
     for (const file of files) {
+      // Idempotenza: salta migrazioni già registrate nella tabella di tracking
       const existing = await sql`SELECT 1 FROM drizzle_migrations WHERE hash = ${file}`;
       if (existing.length > 0) continue;
       await sql.unsafe(readFileSync(join(migrationsDir, file), 'utf8'));
@@ -47,6 +57,7 @@ async function bootstrap() {
   if (url) {
     const db = createDb(url);
     const existing = await db.select().from(stations).limit(1);
+    // Seed solo al primo avvio, quando non ci sono stazioni nel DB
     if (existing.length === 0) {
       await seedDatabase(db);
       console.log('Database seeded');

@@ -1,3 +1,12 @@
+/**
+ * @file types.ts
+ * @module @voltaway/ocpi-sim
+ *
+ * Scopo: Tipi OCPI locali per il simulatore CPO (location, EVSE, tariffe, sessioni, CDR).
+ * Flusso: Condivisi tra store in-memory e handler Express in main.ts.
+ * Dipendenze: Nessuna (tipi puri TypeScript).
+ */
+
 export type EvseStatus = 'AVAILABLE' | 'CHARGING' | 'BLOCKED' | 'OUTOFORDER' | 'UNKNOWN';
 
 export interface OcpiConnector {

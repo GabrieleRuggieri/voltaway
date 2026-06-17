@@ -1,3 +1,12 @@
+/**
+ * @file seed.ts
+ * @module @voltaway/api
+ *
+ * Scopo: Popola il database con CPO, stazioni ed EVSE di demo (Catania) se assenti.
+ * Flusso: main (bootstrap) → seed → db (cpos, stations, evses)
+ * Dipendenze: drizzle-orm, @voltaway/db
+ * Endpoint / export principali: seedDatabase()
+ */
 import { eq } from 'drizzle-orm';
 import { cpos, evses, stations, type Db } from '@voltaway/db';
 
@@ -35,6 +44,7 @@ export async function seedDatabase(db: Db) {
   ];
 
   for (const row of stationRows) {
+    // Upsert per ocpiLocationId: evita duplicati se il seed viene rieseguito
     const found = await db
       .select()
       .from(stations)

@@ -1,3 +1,12 @@
+/**
+ * @file main.ts
+ * @module @voltaway/ocpi-sim
+ *
+ * Scopo: Server Express che simula un CPO OCPI 2.2.1 per sviluppo e test locali.
+ * Flusso: Health check → auth Token → endpoint locations/tariffe/comandi/CDR → store in-memory.
+ * Dipendenze: express, ./store.js.
+ */
+
 import express from 'express';
 import {
   getCdr,
@@ -15,6 +24,7 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'ocpi-sim' });
 });
 
+// Middleware auth OCPI: header Authorization: Token <token>
 app.use((req, res, next) => {
   if (!isAuthorized(req.header('authorization') ?? undefined)) {
     res.status(401).json({ status_code: 2001, status_message: 'Unauthorized' });

@@ -1,3 +1,12 @@
+/**
+ * @file client.ts
+ * @module @voltaway/ocpi
+ *
+ * Scopo: Client HTTP per comunicare con endpoint OCPI 2.2.1 (location, tariffe, sessioni, CDR).
+ * Flusso: OcpiClient(config) → fetch autenticato → parsing risposte JSON tipizzate.
+ * Dipendenze: @voltaway/core (BoundingBox, EvseStatus), ./types.js.
+ */
+
 import type { BoundingBox, EvseStatus } from '@voltaway/core';
 import type {
   OcpiClientConfig,
@@ -59,6 +68,7 @@ export class OcpiClient implements OcpiProvider {
     const body = (await res.json()) as { data: OcpiLocation[] };
     const wanted = new Set(evseIds);
     const out: Array<{ evseUid: string; status: EvseStatus }> = [];
+    // Nessun endpoint dedicato: estrae lo stato EVSE dal payload locations
     for (const loc of body.data ?? []) {
       for (const evse of loc.evses) {
         if (wanted.has(evse.uid)) {

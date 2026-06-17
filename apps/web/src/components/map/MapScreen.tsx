@@ -1,3 +1,11 @@
+/**
+ * @file MapScreen.tsx
+ * @module @voltaway/web
+ *
+ * Scopo: schermata principale — mappa, bottom sheet, sessione attiva e azioni ricarica.
+ * Flusso: web → API (/stations, /sessions) + WebSocket → UI mappa/sheet/banner.
+ * Dipendenze: @/lib/api, useSessionSocket, StationsMap, GlassBottomSheet.
+ */
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -50,6 +58,7 @@ export function MapScreen() {
   const handleSocketUpdate = useCallback(
     (session: ChargingSession) => {
       setActiveSession(session);
+      // Ricarica colonnine al termine sessione per aggiornare stati EVSE
       if (session.status === 'COMPLETED' || session.status === 'FAILED') {
         void load();
       }
@@ -73,7 +82,7 @@ export function MapScreen() {
         ocpiEvseUid: station.ocpiEvseUid,
       });
       setActiveSession(session);
-      setSheetHeight('peek');
+      setSheetHeight('peek'); // Riduce sheet per mostrare banner sessione sulla mappa
       void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Avvio fallito');

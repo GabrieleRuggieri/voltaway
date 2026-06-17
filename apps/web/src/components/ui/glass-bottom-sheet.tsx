@@ -1,3 +1,11 @@
+/**
+ * @file glass-bottom-sheet.tsx
+ * @module @voltaway/web
+ *
+ * Scopo: pannello inferiore stile vetro con altezze peek/half/full e handle drag.
+ * Flusso: stato height da MapScreen → transizione CSS → contenuto scrollabile.
+ * Dipendenze: @/lib/utils.
+ */
 'use client';
 
 import type { ReactNode } from 'react';
@@ -37,6 +45,7 @@ export function GlassBottomSheet({
         className="flex w-full shrink-0 cursor-pointer items-center justify-center border-none bg-transparent py-3"
         aria-label="Espandi elenco colonnine"
         onClick={() => {
+          // Ciclo peek → half → full → peek al tap sull'handle
           if (height === 'peek') onHeightChange?.('half');
           else if (height === 'half') onHeightChange?.('full');
           else onHeightChange?.('peek');

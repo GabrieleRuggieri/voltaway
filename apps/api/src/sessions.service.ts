@@ -1,3 +1,12 @@
+/**
+ * @file sessions.service.ts
+ * @module @voltaway/api
+ *
+ * Scopo: Orchestrazione del ciclo di vita sessione: quote, start/stop OCPI, persistenza e notifiche WS.
+ * Flusso: web → api (sessions) → ocpi + db + sessions.gateway
+ * Dipendenze: @voltaway/db, @voltaway/ocpi, db.module, ocpi.module, pricing, sessions.gateway
+ * Endpoint / export principali: get(), start(), stop(), SessionResponse
+ */
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { evses, sessions, stations, type Db } from '@voltaway/db';
 import type { OcpiClient } from '@voltaway/ocpi';
@@ -60,6 +69,7 @@ export class SessionsService {
     if (!match) throw new NotFoundException('EVSE not found');
 
     const [liveStatus] = await this.ocpi.getStatus([ocpiEvseUid]);
+    // Verifica disponibilità live via OCPI, non solo lo stato cached in DB
     if (liveStatus?.status !== 'AVAILABLE') {
       throw new BadRequestException('EVSE is not available');
     }
@@ -97,6 +107,7 @@ export class SessionsService {
     await this.emit(created!.id, 'STARTING');
 
     try {
+      // Transizione STARTING → ACTIVE solo dopo conferma OCPI; in caso di errore → FAILED
       const ref = await this.ocpi.startSession({
         locationId: ocpiLocationId,
         evseUid: ocpiEvseUid,
@@ -141,6 +152,7 @@ export class SessionsService {
     try {
       await this.ocpi.stopSession(ref);
       const cdr = await this.ocpi.getCdr(ref);
+      // Prezzo finale = costo CPO (CDR) + fee flat Voltaway
       const finalTotal = finalTotalFromCdr(cdr.total_cost.incl_vat);
 
       const [completed] = await this.db
@@ -171,6 +183,7 @@ export class SessionsService {
   }
 
   private async emit(id: string, status: string, payload?: SessionResponse) {
+    // Se non passato, ricostruisce il payload dal DB prima dell'emit WS
     const data = payload ?? (await this.toResponse(await this.findSession(id)));
     this.gateway.emitSessionUpdate(id, { ...data, status });
   }

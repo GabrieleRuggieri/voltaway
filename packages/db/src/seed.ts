@@ -1,3 +1,12 @@
+/**
+ * @file seed.ts
+ * @module @voltaway/db
+ *
+ * Scopo: Popola il database con dati di sviluppo (CPO simulato, stazioni e EVSE a Catania).
+ * Flusso: Legge DATABASE_URL → crea CPO se assente → inserisce stazioni ed EVSE idempotenti.
+ * Dipendenze: drizzle-orm, ./index.js (createDb, schema).
+ */
+
 import { eq } from 'drizzle-orm';
 import { createDb, cpos, stations, evses } from './index.js';
 
@@ -43,6 +52,7 @@ async function seed() {
     const [station] = await db.insert(stations).values(row).onConflictDoNothing().returning();
     if (!station) continue;
 
+    // Due EVSE per stazione, allineati agli ID del simulatore OCPI
     await db
       .insert(evses)
       .values([

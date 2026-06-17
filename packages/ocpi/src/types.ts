@@ -1,3 +1,12 @@
+/**
+ * @file types.ts
+ * @module @voltaway/ocpi
+ *
+ * Scopo: Tipi e interfaccia OcpiProvider per il protocollo OCPI 2.2.1 lato eMSP.
+ * Flusso: Contratti usati da OcpiClient e implementazioni mock/test.
+ * Dipendenze: @voltaway/core (BoundingBox, EvseStatus).
+ */
+
 import type { BoundingBox, EvseStatus } from '@voltaway/core';
 
 export interface OcpiLocation {
@@ -51,6 +60,7 @@ export interface SessionRef {
   authorizationReference: string;
 }
 
+/** Charge Detail Record: riepilogo costi ed energia a fine sessione */
 export interface OcpiCdr {
   id: string;
   session_id: string;

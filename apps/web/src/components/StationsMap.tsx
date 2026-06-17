@@ -1,3 +1,11 @@
+/**
+ * @file StationsMap.tsx
+ * @module @voltaway/web
+ *
+ * Scopo: mappa MapLibre con pin colonnine, prezzo all-in e selezione EVSE.
+ * Flusso: props stations → marker DOM → click → onSelect + flyTo.
+ * Dipendenze: maplibre-gl, @/lib/api.
+ */
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -23,6 +31,7 @@ export function StationsMap({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
 
+  // Inizializza mappa una sola volta; cleanup rimuove marker e istanza
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -56,6 +65,7 @@ export function StationsMap({
     };
   }, []);
 
+  // Ricrea marker quando cambiano stazioni o selezione (pin prezzo vs stato)
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -91,6 +101,7 @@ export function StationsMap({
     }
   }, [stations, selectedUid, onSelect]);
 
+  // Centra mappa quando la selezione cambia da fuori (es. bottom sheet)
   useEffect(() => {
     const station = stations.find((s) => s.ocpiEvseUid === selectedUid);
     const map = mapRef.current;

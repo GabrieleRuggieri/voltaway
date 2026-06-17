@@ -1,15 +1,41 @@
-# Voltaway — stack completo in Docker Compose (locale).
+# =============================================================================
+# Voltaway — stack di sviluppo locale (Docker Compose)
+# =============================================================================
 #
-# Avvio:
-#   cp .env.example .env
-#   docker compose up -d --build
+# Scopo:
+#   Ambiente completo per sviluppare e testare Voltaway senza dipendenze esterne.
+#   Replica infrastruttura, app e integrazioni (auth, storage, email, OCPI) in
+#   container isolati sulla rete interna "voltaway".
 #
-# URL principali:
+# Servizi / componenti:
+#   Infrastruttura:
+#     traefik      — reverse proxy; espone i servizi su *.voltaway.localhost:80
+#     postgres     — database PostGIS (dati applicativi e geospaziali)
+#     redis        — cache e code per worker / sessioni
+#     keycloak     — identity provider OIDC (realm importato da infra/keycloak)
+#     minio        — object storage S3-compatibile (ricevute, export)
+#     minio-init   — job one-shot: crea il bucket S3 all'avvio
+#     mailpit      — SMTP di test + UI per ispezionare le email inviate
+#     ocpi-sim     — simulatore OCPI (CPO fittizio per sessioni di ricarica)
+#   Applicazione:
+#     api          — backend REST + WebSocket (/sessions)
+#     worker       — job asincroni (settlement, sync OCPI, ecc.)
+#     web          — frontend Next.js
+#
+# Flusso dev:
+#   1. cp .env.example .env  (variabili condivise tra servizi)
+#   2. docker compose up -d --build
+#   3. Traefik instrada il traffico HTTP verso i container etichettati
+#   4. api/worker attendono postgres, redis e ocpi-sim healthy; web attende api
+#   5. Sviluppo via browser o porte dirette (3000, 3001, 5432, …)
+#
+# URL principali (via Traefik):
 #   http://app.voltaway.localhost   — web app
 #   http://api.voltaway.localhost   — API REST + WebSocket /sessions
 #   http://auth.voltaway.localhost  — Keycloak
 #   http://mail.voltaway.localhost  — Mailpit
 #   http://minio.voltaway.localhost — MinIO console
+#   http://ocpi.voltaway.localhost  — simulatore OCPI
 
 name: voltaway
 

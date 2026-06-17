@@ -1,3 +1,12 @@
+/**
+ * @file migrate.ts
+ * @module @voltaway/db
+ *
+ * Scopo: Applica le migrazioni SQL generate da Drizzle in ordine, tracciandole per hash.
+ * Flusso: Connette a Postgres → crea tabella tracking → esegue file .sql non ancora applicati.
+ * Dipendenze: postgres, node:fs, node:path.
+ */
+
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +33,7 @@ async function migrate() {
   for (const file of files) {
     const hash = file;
     const existing = await sql`SELECT 1 FROM drizzle_migrations WHERE hash = ${hash}`;
+    // Salta migrazioni già applicate (idempotenza per re-run sicuro)
     if (existing.length > 0) continue;
 
     const content = readFileSync(join(migrationsDir, file), 'utf8');

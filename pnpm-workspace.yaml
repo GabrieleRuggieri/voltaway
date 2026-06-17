@@ -1,3 +1,20 @@
+# =============================================================================
+# Voltaway — definizione workspace pnpm (monorepo)
+# =============================================================================
+#
+# Scopo:
+#   Dichiarare le cartelle del monorepo gestite da pnpm: app deployabili e
+#   pacchetti condivisi (core, db, config, ecc.) con dipendenze linkate localmente.
+#
+# Componenti:
+#   apps/*     — applicazioni (api, web, worker, ocpi-sim, …)
+#   packages/* — librerie interne riusate tra le app
+#
+# Flusso dev:
+#   Dalla root: `pnpm install` risolve tutto il workspace; `pnpm -r build/test`
+#   o script root (build, test, format:check) operano su tutti i package.
+#   Aggiungere una nuova app o lib = nuova sottocartella sotto apps/ o packages/.
+#
 packages:
   - 'apps/*'
   - 'packages/*'

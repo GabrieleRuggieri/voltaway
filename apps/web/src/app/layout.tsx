@@ -1,3 +1,11 @@
+/**
+ * @file layout.tsx
+ * @module @voltaway/web
+ *
+ * Scopo: layout radice Next.js con font, metadata PWA e viewport mobile.
+ * Flusso: App Router → layout → page (MapScreen).
+ * Dipendenze: next/font, globals.css.
+ */
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans } from 'next/font/google';
 import './globals.css';
@@ -17,6 +25,7 @@ export const metadata: Metadata = {
   },
 };
 
+// Viewport bloccato per UX app-like; safe-area gestita nei componenti figli
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,

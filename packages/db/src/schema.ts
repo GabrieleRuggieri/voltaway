@@ -1,3 +1,12 @@
+/**
+ * @file schema.ts
+ * @module @voltaway/db
+ *
+ * Scopo: Definisce lo schema PostgreSQL (CPO, stazioni, EVSE, sessioni) con Drizzle ORM.
+ * Flusso: Usato da migrate, seed e createDb per tipizzare query e generare migrazioni.
+ * Dipendenze: drizzle-orm/pg-core.
+ */
+
 import {
   doublePrecision,
   integer,
@@ -17,6 +26,7 @@ export const evseStatusEnum = pgEnum('evse_status', [
   'UNKNOWN',
 ]);
 
+/** Macchina a stati della sessione di ricarica lato Voltaway */
 export const sessionStatusEnum = pgEnum('session_status', [
   'QUOTED',
   'AUTHORIZING',

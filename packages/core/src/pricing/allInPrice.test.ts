@@ -1,3 +1,10 @@
+/**
+ * @file allInPrice.test.ts
+ * @module @voltaway/core
+ *
+ * File di test per computeAllInPrice.
+ */
+
 import { describe, expect, it } from 'vitest';
 import { computeAllInPrice } from './allInPrice.js';
 

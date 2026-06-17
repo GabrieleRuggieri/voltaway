@@ -1,3 +1,11 @@
+/**
+ * @file StationSheetContent.tsx
+ * @module @voltaway/web
+ *
+ * Scopo: contenuti del bottom sheet — riepilogo, elenco colonnine e dettaglio EVSE.
+ * Flusso: props stations/session → UI lista/dettaglio → onStart/onSelect verso MapScreen.
+ * Dipendenze: @/lib/api, Badge, Button, Card, cn.
+ */
 'use client';
 
 import { ChevronLeft, Zap } from 'lucide-react';
@@ -54,6 +62,7 @@ export function StationListItems({
       {stations.map((s) => {
         const isSelected = selectedUid === s.ocpiEvseUid;
         const busy = activeSession?.status === 'ACTIVE' && activeSession.evseUid === s.ocpiEvseUid;
+        // Una sola sessione alla volta: blocca avvio se già attiva altrove
         const canStart = s.status === 'AVAILABLE' && !activeSession && loadingKey !== s.ocpiEvseUid;
 
         return (

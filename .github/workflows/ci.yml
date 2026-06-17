@@ -1,3 +1,21 @@
+# =============================================================================
+# Voltaway — pipeline CI (GitHub Actions)
+# =============================================================================
+#
+# Scopo:
+#   Validare ogni push e pull request su main, develop e branch feature/** prima
+#   del merge: dipendenze bloccate, formattazione, build monorepo e test unitari.
+#
+# Componenti:
+#   Job "build-and-test" (ubuntu-latest):
+#     checkout → pnpm 10.12.1 → Node 22 → install → format:check → build → test
+#
+# Flusso dev:
+#   1. Push o PR su main / develop / feature/** → workflow automatico
+#   2. pnpm install --frozen-lockfile (lockfile deve essere aggiornato in repo)
+#   3. pnpm format:check, pnpm build, pnpm test — fallimento blocca il merge
+#   4. In locale: stessi comandi prima di aprire una PR per evitare sorprese in CI
+#
 name: CI
 
 on:

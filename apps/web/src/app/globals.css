@@ -1,3 +1,9 @@
+/**
+ * globals.css — tema Tailwind v4 e stili globali web Voltaway
+ *
+ * Scopo: token colore glass-light, utility mappa (pin, MapLibre), animazioni carica.
+ * Flusso: importato da layout.tsx; classi usate da componenti map/ e ui/.
+ */
 @import 'tailwindcss';
 
 @theme inline {

@@ -1,3 +1,11 @@
+/**
+ * @file Badge.tsx
+ * @module @voltaway/web
+ *
+ * Scopo: badge di stato per EVSE e sessioni (AVAILABLE, ACTIVE, FAILED, …).
+ * Flusso: status string → statusVariant() → colore semantico in UI.
+ * Dipendenze: class-variance-authority, @/lib/utils.
+ */
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
@@ -35,6 +43,7 @@ function Badge({ className, variant, ...props }: BadgeProps) {
 
 export { Badge, badgeVariants };
 
+/** Mappa stati OCPI/sessione alle varianti colore del badge. */
 export function statusVariant(status: string) {
   if (status === 'AVAILABLE') return 'available' as const;
   if (status === 'CHARGING') return 'charging' as const;

@@ -1,3 +1,11 @@
+/**
+ * @file SessionBanner.tsx
+ * @module @voltaway/web
+ *
+ * Scopo: banner flottante per sessione di ricarica attiva o completata.
+ * Flusso: props session → UI stato/prezzo → onStop/onTap verso MapScreen.
+ * Dipendenze: @/lib/api, Badge, Button, Card.
+ */
 'use client';
 
 import type { ChargingSession } from '@/lib/api';
@@ -47,6 +55,7 @@ export function SessionBanner({
             </p>
           )}
         </button>
+        {/* Stop visibile solo durante ricarica attiva, non a sessione conclusa */}
         {session.status === 'ACTIVE' && (
           <Button
             variant="destructive"

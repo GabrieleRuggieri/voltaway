@@ -1,3 +1,12 @@
+/**
+ * @file stations.controller.ts
+ * @module @voltaway/api
+ *
+ * Scopo: Elenca stazioni/EVSE con prezzi all-in e sincronizza stato da OCPI verso il DB locale.
+ * Flusso: web → api (stations) → ocpi + db; worker → GET /stations/sync
+ * Dipendenze: @voltaway/db, @voltaway/ocpi, db.module, ocpi.module, pricing
+ * Endpoint / export principali: GET /stations, GET /stations/sync
+ */
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { evses, stations, type Db } from '@voltaway/db';
 import type { OcpiClient } from '@voltaway/ocpi';
@@ -34,6 +43,7 @@ export class StationsController {
     const dbStations = await this.db.select().from(stations);
 
     const items = await Promise.all(
+      // Un item per EVSE: merge dati OCPI live con metadati DB e quote pricing
       ocpiLocations.flatMap((loc) =>
         loc.evses.map(async (evse) => {
           const dbStation = dbStations.find((s) => s.ocpiLocationId === loc.id);
@@ -87,6 +97,7 @@ export class StationsController {
       if (existing.length === 0) continue;
 
       for (const evse of loc.evses) {
+        // Aggiorna solo EVSE di stazioni già note in DB (seed o import precedente)
         await this.db
           .update(evses)
           .set({ status: evse.status, tariffId: evse.tariff_id ?? null })

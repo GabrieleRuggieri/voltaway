@@ -1,3 +1,12 @@
+/**
+ * @file app.module.ts
+ * @module @voltaway/api
+ *
+ * Scopo: Modulo radice NestJS che registra controller, provider e moduli condivisi (DB, OCPI).
+ * Flusso: main → app.module → controller/service → db / ocpi
+ * Dipendenze: DbModule, OcpiModule, HealthController, StationsController, SessionsController, SessionsService, SessionsGateway, QueueService
+ * Endpoint / export principali: AppModule
+ */
 import { Module } from '@nestjs/common';
 import { HealthController } from './health.controller';
 import { QueueService } from './queue.service';
