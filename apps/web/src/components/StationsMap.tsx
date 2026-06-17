@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { StationMarker } from '@/lib/api';
 
 const TILES =
-  process.env.NEXT_PUBLIC_MAP_TILES_URL ?? 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+  process.env.NEXT_PUBLIC_MAP_TILES_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
 const CATANIA_CENTER: [number, number] = [15.087, 37.508];
 
@@ -35,7 +35,7 @@ export function StationsMap({
             type: 'raster',
             tiles: [TILES],
             tileSize: 256,
-            attribution: '© OpenStreetMap © CARTO',
+            attribution: '© OpenStreetMap',
           },
         },
         layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
@@ -98,5 +98,5 @@ export function StationsMap({
     map.flyTo({ center: [station.longitude, station.latitude], zoom: 15, duration: 600 });
   }, [selectedUid, stations]);
 
-  return <div ref={containerRef} className="map-fullscreen" />;
+  return <div ref={containerRef} className="absolute inset-0 h-full w-full" />;
 }

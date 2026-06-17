@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Loader2, RefreshCw, Zap } from 'lucide-react';
+
 import {
   fetchStations,
   startSession,
@@ -9,7 +11,8 @@ import {
   type StationMarker,
 } from '@/lib/api';
 import { useSessionSocket } from '@/hooks/useSessionSocket';
-import { BottomSheet, type SheetHeight } from '@/components/ui/BottomSheet';
+import { GlassBottomSheet, type SheetHeight } from '@/components/ui/glass-bottom-sheet';
+import { Button } from '@/components/ui/button';
 import { StationsMap } from '@/components/StationsMap';
 import { SessionBanner } from '@/components/map/SessionBanner';
 import {
@@ -95,26 +98,29 @@ export function MapScreen() {
   }
 
   return (
-    <div className="map-screen">
+    <div className="fixed inset-0 overflow-hidden bg-sky-50/50">
       <StationsMap
         stations={stations}
         selectedUid={selected?.ocpiEvseUid}
         onSelect={selectStation}
       />
 
-      <header className="map-top-bar">
-        <div className="map-brand">
-          <span className="map-brand-mark">⚡</span>
-          <span className="map-brand-name">Voltaway</span>
+      <header className="pointer-events-none absolute left-3 right-3 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-10 flex items-center justify-between">
+        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/70 bg-white/75 px-4 py-2.5 shadow-lg shadow-slate-900/8 backdrop-blur-xl">
+          <Zap className="size-4 text-primary" strokeWidth={2.5} />
+          <span className="text-sm font-bold tracking-tight text-foreground">Voltaway</span>
         </div>
-        <button
+        <Button
           type="button"
-          className="map-refresh"
+          variant="glass"
+          size="icon"
+          className="pointer-events-auto rounded-full"
           onClick={() => void load()}
           disabled={loading}
+          aria-label="Aggiorna colonnine"
         >
-          {loading ? '…' : '↻'}
-        </button>
+          {loading ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+        </Button>
       </header>
 
       {activeSession && (
@@ -127,12 +133,15 @@ export function MapScreen() {
       )}
 
       {error && (
-        <div className="map-toast" role="alert">
+        <div
+          className="absolute left-3 right-3 top-[calc(5.5rem+env(safe-area-inset-top,0px))] z-[12] rounded-2xl border border-red-200/80 bg-red-50/90 px-4 py-3 text-sm text-red-800 shadow-lg backdrop-blur-md"
+          role="alert"
+        >
           {error}
         </div>
       )}
 
-      <BottomSheet height={sheetHeight} onHeightChange={setSheetHeight}>
+      <GlassBottomSheet height={sheetHeight} onHeightChange={setSheetHeight}>
         {selected && sheetHeight !== 'peek' ? (
           <StationDetailPanel
             station={selected}
@@ -148,7 +157,7 @@ export function MapScreen() {
           <StationPeekSummary stations={stations} />
         ) : (
           <>
-            <h3 className="sheet-list-title">Colonnine vicine</h3>
+            <h3 className="mb-3 text-lg font-bold tracking-tight">Colonnine vicine</h3>
             <StationListItems
               stations={stations}
               selectedUid={selected?.ocpiEvseUid}
@@ -159,7 +168,7 @@ export function MapScreen() {
             />
           </>
         )}
-      </BottomSheet>
+      </GlassBottomSheet>
     </div>
   );
 }

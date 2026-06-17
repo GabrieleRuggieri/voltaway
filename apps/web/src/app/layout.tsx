@@ -1,12 +1,18 @@
 import type { Metadata, Viewport } from 'next';
+import { DM_Sans } from 'next/font/google';
 import './globals.css';
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
+});
 
 export const metadata: Metadata = {
   title: 'Voltaway — Ricarica EV',
-  description: 'Mappa, prezzo all-in e avvio ricarica — come EasyPark per le colonnine',
+  description: 'Mappa, prezzo all-in e avvio ricarica a Catania',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'Voltaway',
   },
 };
@@ -17,13 +23,13 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#05080d',
+  themeColor: '#f5f8fb',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="it">
-      <body>{children}</body>
+      <body className={dmSans.className}>{children}</body>
     </html>
   );
 }
