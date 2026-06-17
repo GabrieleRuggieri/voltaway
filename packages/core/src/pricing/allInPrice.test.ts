@@ -1,18 +1,18 @@
-import { describe, expect, it } from "vitest";
-import { computeAllInPrice } from "./allInPrice.js";
+import { describe, expect, it } from 'vitest';
+import { computeAllInPrice } from './allInPrice.js';
 
-describe("computeAllInPrice", () => {
-  it("calcola prezzo all-in con energia e fee fissa", () => {
+describe('computeAllInPrice', () => {
+  it('calcola prezzo all-in con energia e fee fissa', () => {
     const quote = computeAllInPrice({
       cpoTariff: {
-        id: "t1",
-        currency: "EUR",
+        id: 't1',
+        currency: 'EUR',
         components: [
-          { type: "ENERGY", price: 0.45 },
-          { type: "FLAT", price: 0.35 },
+          { type: 'ENERGY', price: 0.45 },
+          { type: 'FLAT', price: 0.35 },
         ],
       },
-      voltawayFee: { type: "flat", value: 0.29 },
+      voltawayFee: { type: 'flat', value: 0.29 },
       estimate: { kWh: 20, minutes: 40 },
     });
 
@@ -22,14 +22,14 @@ describe("computeAllInPrice", () => {
     expect(quote.breakdown.voltawayFee).toBe(0.29);
   });
 
-  it("applica markup percentuale", () => {
+  it('applica markup percentuale', () => {
     const quote = computeAllInPrice({
       cpoTariff: {
-        id: "t2",
-        currency: "EUR",
-        components: [{ type: "ENERGY", price: 0.5 }],
+        id: 't2',
+        currency: 'EUR',
+        components: [{ type: 'ENERGY', price: 0.5 }],
       },
-      voltawayFee: { type: "percent", value: 5 },
+      voltawayFee: { type: 'percent', value: 5 },
       estimate: { kWh: 10, minutes: 30 },
     });
 

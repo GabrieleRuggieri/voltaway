@@ -14,9 +14,7 @@
     ]
   },
   "defaultRoles": ["driver"],
-  "groups": [
-    { "name": "fleets" }
-  ],
+  "groups": [{ "name": "fleets" }],
   "clients": [
     {
       "clientId": "voltaway-web",

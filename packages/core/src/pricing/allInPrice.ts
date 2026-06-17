@@ -1,14 +1,20 @@
-import type { AllInQuote, CpoTariff, FeePolicy, SessionEstimate, TariffComponentType } from "../types.js";
+import type {
+  AllInQuote,
+  CpoTariff,
+  FeePolicy,
+  SessionEstimate,
+  TariffComponentType,
+} from '../types.js';
 
 function componentCost(
   type: TariffComponentType,
-  components: CpoTariff["components"],
+  components: CpoTariff['components'],
   estimate: SessionEstimate,
 ): number {
   const items = components.filter((c) => c.type === type);
   return items.reduce((sum, item) => {
-    if (item.type === "ENERGY") return sum + item.price * estimate.kWh;
-    if (item.type === "TIME" || item.type === "PARKING_TIME") {
+    if (item.type === 'ENERGY') return sum + item.price * estimate.kWh;
+    if (item.type === 'TIME' || item.type === 'PARKING_TIME') {
       const step = item.stepSize ?? 1;
       const units = Math.ceil(estimate.minutes / step);
       return sum + item.price * units;
@@ -23,18 +29,16 @@ export function computeAllInPrice(input: {
   estimate: SessionEstimate;
 }): AllInQuote {
   const { cpoTariff, voltawayFee, estimate } = input;
-  const energy = componentCost("ENERGY", cpoTariff.components, estimate);
-  const time = componentCost("TIME", cpoTariff.components, estimate);
-  const flat = componentCost("FLAT", cpoTariff.components, estimate);
-  const parking = componentCost("PARKING_TIME", cpoTariff.components, estimate);
+  const energy = componentCost('ENERGY', cpoTariff.components, estimate);
+  const time = componentCost('TIME', cpoTariff.components, estimate);
+  const flat = componentCost('FLAT', cpoTariff.components, estimate);
+  const parking = componentCost('PARKING_TIME', cpoTariff.components, estimate);
   const subtotal = energy + time + flat + parking;
 
   const discount = voltawayFee.premiumDiscountPercent ?? 0;
   const feeBase = subtotal * (1 - discount / 100);
   const voltawayFeeAmount =
-    voltawayFee.type === "percent"
-      ? feeBase * (voltawayFee.value / 100)
-      : voltawayFee.value;
+    voltawayFee.type === 'percent' ? feeBase * (voltawayFee.value / 100) : voltawayFee.value;
 
   const totalEstimate = subtotal + voltawayFeeAmount;
   const allInPerKwh = estimate.kWh > 0 ? totalEstimate / estimate.kWh : totalEstimate;

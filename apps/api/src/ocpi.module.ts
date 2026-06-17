@@ -1,7 +1,7 @@
-import { Global, Module } from "@nestjs/common";
-import { OcpiClient } from "@voltaway/ocpi";
+import { Global, Module } from '@nestjs/common';
+import { OcpiClient } from '@voltaway/ocpi';
 
-export const OCPI = Symbol("OCPI");
+export const OCPI = Symbol('OCPI');
 
 @Global()
 @Module({
@@ -10,8 +10,8 @@ export const OCPI = Symbol("OCPI");
       provide: OCPI,
       useFactory: () =>
         new OcpiClient({
-          baseUrl: process.env.OCPI_BASE_URL ?? "http://ocpi-sim:4000",
-          token: process.env.OCPI_TOKEN ?? "sim-token",
+          baseUrl: process.env.OCPI_BASE_URL ?? 'http://ocpi-sim:4000',
+          token: process.env.OCPI_TOKEN ?? 'sim-token',
         }),
     },
   ],

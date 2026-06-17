@@ -1,7 +1,7 @@
-import { Global, Module } from "@nestjs/common";
-import { createDb, type Db } from "@voltaway/db";
+import { Global, Module } from '@nestjs/common';
+import { createDb, type Db } from '@voltaway/db';
 
-export const DB = Symbol("DB");
+export const DB = Symbol('DB');
 
 @Global()
 @Module({
@@ -10,7 +10,7 @@ export const DB = Symbol("DB");
       provide: DB,
       useFactory: (): Db => {
         const url = process.env.DATABASE_URL;
-        if (!url) throw new Error("DATABASE_URL is required");
+        if (!url) throw new Error('DATABASE_URL is required');
         return createDb(url);
       },
     },

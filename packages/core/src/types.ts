@@ -1,4 +1,4 @@
-export type TariffComponentType = "ENERGY" | "TIME" | "FLAT" | "PARKING_TIME";
+export type TariffComponentType = 'ENERGY' | 'TIME' | 'FLAT' | 'PARKING_TIME';
 
 export interface TariffComponent {
   type: TariffComponentType;
@@ -13,7 +13,7 @@ export interface CpoTariff {
 }
 
 export interface FeePolicy {
-  type: "percent" | "flat";
+  type: 'percent' | 'flat';
   value: number;
   premiumDiscountPercent?: number;
 }
@@ -38,7 +38,7 @@ export interface AllInQuote {
   breakdown: AllInQuoteBreakdown;
 }
 
-export type EvseStatus = "AVAILABLE" | "CHARGING" | "BLOCKED" | "OUTOFORDER" | "UNKNOWN";
+export type EvseStatus = 'AVAILABLE' | 'CHARGING' | 'BLOCKED' | 'OUTOFORDER' | 'UNKNOWN';
 
 export interface GeoPoint {
   lat: number;

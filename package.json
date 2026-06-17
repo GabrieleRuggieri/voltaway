@@ -7,11 +7,14 @@
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "db:generate": "pnpm --filter @voltaway/db db:generate",
     "db:migrate": "pnpm --filter @voltaway/db db:migrate",
     "db:seed": "pnpm --filter @voltaway/db db:seed"
   },
   "devDependencies": {
+    "prettier": "^3.6.2",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3"
   }

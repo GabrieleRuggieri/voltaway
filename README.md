@@ -246,6 +246,7 @@ docker compose --profile app up -d --build
 **Sviluppo senza rebuild Docker** (con infra già su Compose):
 ```bash
 pnpm install
+pnpm format              # formatta tutto il codice (Prettier)
 pnpm --filter @voltaway/ocpi-sim dev   # :4000
 pnpm --filter @voltaway/api dev        # :3001
 pnpm --filter @voltaway/web dev         # :3000

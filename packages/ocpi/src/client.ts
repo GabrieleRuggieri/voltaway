@@ -1,4 +1,4 @@
-import type { BoundingBox, EvseStatus } from "@voltaway/core";
+import type { BoundingBox, EvseStatus } from '@voltaway/core';
 import type {
   OcpiClientConfig,
   OcpiCdr,
@@ -7,13 +7,13 @@ import type {
   OcpiTariff,
   SessionRef,
   StartSessionInput,
-} from "./types.js";
+} from './types.js';
 
 function authHeaders(token: string): HeadersInit {
   return {
     Authorization: `Token ${token}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
   };
 }
 
@@ -27,12 +27,12 @@ export class OcpiClient implements OcpiProvider {
   constructor(private readonly config: OcpiClientConfig) {}
 
   private url(path: string): string {
-    const base = this.config.baseUrl.replace(/\/$/, "");
+    const base = this.config.baseUrl.replace(/\/$/, '');
     return `${base}${path}`;
   }
 
   async getLocations(area?: BoundingBox): Promise<OcpiLocation[]> {
-    const res = await fetch(this.url("/ocpi/2.2.1/locations"), {
+    const res = await fetch(this.url('/ocpi/2.2.1/locations'), {
       headers: authHeaders(this.config.token),
     });
     if (!res.ok) throw new Error(`OCPI locations failed: ${res.status}`);
@@ -52,7 +52,7 @@ export class OcpiClient implements OcpiProvider {
   }
 
   async getStatus(evseIds: string[]): Promise<Array<{ evseUid: string; status: EvseStatus }>> {
-    const res = await fetch(this.url("/ocpi/2.2.1/locations"), {
+    const res = await fetch(this.url('/ocpi/2.2.1/locations'), {
       headers: authHeaders(this.config.token),
     });
     if (!res.ok) throw new Error(`OCPI status failed: ${res.status}`);
@@ -70,13 +70,13 @@ export class OcpiClient implements OcpiProvider {
   }
 
   async startSession(input: StartSessionInput): Promise<SessionRef> {
-    const res = await fetch(this.url("/ocpi/2.2.1/commands/START_SESSION"), {
-      method: "POST",
+    const res = await fetch(this.url('/ocpi/2.2.1/commands/START_SESSION'), {
+      method: 'POST',
       headers: authHeaders(this.config.token),
       body: JSON.stringify({
         location_id: input.locationId,
         evse_uid: input.evseUid,
-        token: { uid: input.tokenUid, type: "APP_USER" },
+        token: { uid: input.tokenUid, type: 'APP_USER' },
       }),
     });
     if (!res.ok) throw new Error(`OCPI START_SESSION failed: ${res.status}`);
@@ -85,8 +85,8 @@ export class OcpiClient implements OcpiProvider {
   }
 
   async stopSession(ref: SessionRef): Promise<void> {
-    const res = await fetch(this.url("/ocpi/2.2.1/commands/STOP_SESSION"), {
-      method: "POST",
+    const res = await fetch(this.url('/ocpi/2.2.1/commands/STOP_SESSION'), {
+      method: 'POST',
       headers: authHeaders(this.config.token),
       body: JSON.stringify({ session_id: ref.sessionId }),
     });

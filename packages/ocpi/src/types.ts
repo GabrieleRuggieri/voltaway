@@ -1,4 +1,4 @@
-import type { BoundingBox, EvseStatus } from "@voltaway/core";
+import type { BoundingBox, EvseStatus } from '@voltaway/core';
 
 export interface OcpiLocation {
   id: string;

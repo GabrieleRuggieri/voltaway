@@ -1,31 +1,34 @@
-import { eq } from "drizzle-orm";
-import { cpos, evses, stations, type Db } from "@voltaway/db";
+import { eq } from 'drizzle-orm';
+import { cpos, evses, stations, type Db } from '@voltaway/db';
 
 export async function seedDatabase(db: Db) {
-  const existing = await db.select().from(cpos).where(eq(cpos.code, "sim-cpo")).limit(1);
+  const existing = await db.select().from(cpos).where(eq(cpos.code, 'sim-cpo')).limit(1);
   let cpoId = existing[0]?.id;
 
   if (!cpoId) {
-    const [inserted] = await db.insert(cpos).values({ code: "sim-cpo", name: "Voltaway Sim CPO" }).returning();
+    const [inserted] = await db
+      .insert(cpos)
+      .values({ code: 'sim-cpo', name: 'Voltaway Sim CPO' })
+      .returning();
     cpoId = inserted!.id;
   }
 
   const stationRows = [
     {
       cpoId,
-      ocpiLocationId: "loc-milano-centro",
-      name: "Hub Duomo",
-      address: "Piazza del Duomo",
-      city: "Milano",
+      ocpiLocationId: 'loc-milano-centro',
+      name: 'Hub Duomo',
+      address: 'Piazza del Duomo',
+      city: 'Milano',
       latitude: 45.4642,
       longitude: 9.19,
     },
     {
       cpoId,
-      ocpiLocationId: "loc-milano-navigli",
-      name: "Navigli Charge",
-      address: "Alzaia Naviglio Grande 12",
-      city: "Milano",
+      ocpiLocationId: 'loc-milano-navigli',
+      name: 'Navigli Charge',
+      address: 'Alzaia Naviglio Grande 12',
+      city: 'Milano',
       latitude: 45.4481,
       longitude: 9.1762,
     },
@@ -48,16 +51,16 @@ export async function seedDatabase(db: Db) {
       {
         stationId,
         ocpiEvseUid: `${row.ocpiLocationId}-evse-1`,
-        status: "AVAILABLE" as const,
+        status: 'AVAILABLE' as const,
         maxPowerKw: 50,
-        tariffId: "tariff-standard",
+        tariffId: 'tariff-standard',
       },
       {
         stationId,
         ocpiEvseUid: `${row.ocpiLocationId}-evse-2`,
-        status: "AVAILABLE" as const,
+        status: 'AVAILABLE' as const,
         maxPowerKw: 22,
-        tariffId: "tariff-economy",
+        tariffId: 'tariff-economy',
       },
     ];
 

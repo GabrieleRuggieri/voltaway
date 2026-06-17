@@ -1,14 +1,14 @@
-import { Controller, Get, Inject, Query } from "@nestjs/common";
-import { computeAllInPrice } from "@voltaway/core";
-import { evses, stations, type Db } from "@voltaway/db";
-import type { OcpiClient } from "@voltaway/ocpi";
-import { eq } from "drizzle-orm";
-import { DB } from "./db.module";
-import { OCPI } from "./ocpi.module";
+import { Controller, Get, Inject, Query } from '@nestjs/common';
+import { computeAllInPrice } from '@voltaway/core';
+import { evses, stations, type Db } from '@voltaway/db';
+import type { OcpiClient } from '@voltaway/ocpi';
+import { eq } from 'drizzle-orm';
+import { DB } from './db.module';
+import { OCPI } from './ocpi.module';
 
-const DEFAULT_FEE = { type: "flat" as const, value: 0.29 };
+const DEFAULT_FEE = { type: 'flat' as const, value: 0.29 };
 
-@Controller("stations")
+@Controller('stations')
 export class StationsController {
   constructor(
     @Inject(DB) private readonly db: Db,
@@ -17,10 +17,10 @@ export class StationsController {
 
   @Get()
   async list(
-    @Query("minLat") minLat?: string,
-    @Query("minLng") minLng?: string,
-    @Query("maxLat") maxLat?: string,
-    @Query("maxLng") maxLng?: string,
+    @Query('minLat') minLat?: string,
+    @Query('minLng') minLng?: string,
+    @Query('maxLat') maxLat?: string,
+    @Query('maxLng') maxLng?: string,
   ) {
     const bbox =
       minLat && minLng && maxLat && maxLng
@@ -39,7 +39,7 @@ export class StationsController {
       ocpiLocations.flatMap((loc) =>
         loc.evses.map(async (evse) => {
           const dbStation = dbStations.find((s) => s.ocpiLocationId === loc.id);
-          const tariffId = evse.tariff_id ?? "tariff-standard";
+          const tariffId = evse.tariff_id ?? 'tariff-standard';
           const ocpiTariff = await this.ocpi.getTariff(tariffId);
 
           let allInPerKwh: number | null = null;
@@ -52,7 +52,7 @@ export class StationsController {
                 id: ocpiTariff.id,
                 currency: ocpiTariff.currency,
                 components: components.map((c) => ({
-                  type: c.type as "ENERGY" | "TIME" | "FLAT" | "PARKING_TIME",
+                  type: c.type as 'ENERGY' | 'TIME' | 'FLAT' | 'PARKING_TIME',
                   price: c.price,
                   stepSize: c.step_size,
                 })),
@@ -78,7 +78,7 @@ export class StationsController {
             tariffId,
             allInPerKwh,
             totalEstimate,
-            currency: ocpiTariff?.currency ?? "EUR",
+            currency: ocpiTariff?.currency ?? 'EUR',
           };
         }),
       ),
@@ -87,7 +87,7 @@ export class StationsController {
     return { data: items, count: items.length };
   }
 
-  @Get("sync")
+  @Get('sync')
   async syncFromOcpi() {
     const locations = await this.ocpi.getLocations();
     let synced = 0;

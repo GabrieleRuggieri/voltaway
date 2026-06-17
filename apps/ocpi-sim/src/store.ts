@@ -1,5 +1,5 @@
-import type { EvseStatus } from "@voltaway/core";
-import type { OcpiCdr, OcpiLocation, OcpiTariff, SessionRef } from "./types.js";
+import type { EvseStatus } from '@voltaway/core';
+import type { OcpiCdr, OcpiLocation, OcpiTariff, SessionRef } from './types.js';
 
 interface ActiveSession extends SessionRef {
   locationId: string;
@@ -8,29 +8,29 @@ interface ActiveSession extends SessionRef {
   kWhDelivered: number;
 }
 
-const TOKEN = process.env.OCPI_TOKEN ?? "sim-token";
+const TOKEN = process.env.OCPI_TOKEN ?? 'sim-token';
 
 const tariffs: Record<string, OcpiTariff> = {
-  "tariff-standard": {
-    id: "tariff-standard",
-    currency: "EUR",
+  'tariff-standard': {
+    id: 'tariff-standard',
+    currency: 'EUR',
     elements: [
       {
         price_components: [
-          { type: "ENERGY", price: 0.42, step_size: 1 },
-          { type: "FLAT", price: 0.35, step_size: 1 },
+          { type: 'ENERGY', price: 0.42, step_size: 1 },
+          { type: 'FLAT', price: 0.35, step_size: 1 },
         ],
       },
     ],
   },
-  "tariff-economy": {
-    id: "tariff-economy",
-    currency: "EUR",
+  'tariff-economy': {
+    id: 'tariff-economy',
+    currency: 'EUR',
     elements: [
       {
         price_components: [
-          { type: "ENERGY", price: 0.36, step_size: 1 },
-          { type: "TIME", price: 0.05, step_size: 15 },
+          { type: 'ENERGY', price: 0.36, step_size: 1 },
+          { type: 'TIME', price: 0.05, step_size: 15 },
         ],
       },
     ],
@@ -39,42 +39,42 @@ const tariffs: Record<string, OcpiTariff> = {
 
 const locations: OcpiLocation[] = [
   {
-    id: "loc-milano-centro",
-    name: "Hub Duomo",
-    address: "Piazza del Duomo",
-    city: "Milano",
-    country: "IT",
-    coordinates: { latitude: "45.4642", longitude: "9.1900" },
+    id: 'loc-milano-centro',
+    name: 'Hub Duomo',
+    address: 'Piazza del Duomo',
+    city: 'Milano',
+    country: 'IT',
+    coordinates: { latitude: '45.4642', longitude: '9.1900' },
     evses: [
       {
-        uid: "loc-milano-centro-evse-1",
-        evse_id: "IT*SIM*E001",
-        status: "AVAILABLE",
+        uid: 'loc-milano-centro-evse-1',
+        evse_id: 'IT*SIM*E001',
+        status: 'AVAILABLE',
         max_power_kw: 50,
-        tariff_id: "tariff-standard",
+        tariff_id: 'tariff-standard',
         connectors: [
           {
-            id: "1",
-            standard: "IEC_62196_T2_COMBO",
-            format: "CABLE",
-            power_type: "DC",
+            id: '1',
+            standard: 'IEC_62196_T2_COMBO',
+            format: 'CABLE',
+            power_type: 'DC',
             max_voltage: 500,
             max_amperage: 125,
           },
         ],
       },
       {
-        uid: "loc-milano-centro-evse-2",
-        evse_id: "IT*SIM*E002",
-        status: "AVAILABLE",
+        uid: 'loc-milano-centro-evse-2',
+        evse_id: 'IT*SIM*E002',
+        status: 'AVAILABLE',
         max_power_kw: 22,
-        tariff_id: "tariff-economy",
+        tariff_id: 'tariff-economy',
         connectors: [
           {
-            id: "1",
-            standard: "IEC_62196_T2",
-            format: "SOCKET",
-            power_type: "AC_3_PHASE",
+            id: '1',
+            standard: 'IEC_62196_T2',
+            format: 'SOCKET',
+            power_type: 'AC_3_PHASE',
             max_voltage: 400,
             max_amperage: 32,
           },
@@ -83,42 +83,42 @@ const locations: OcpiLocation[] = [
     ],
   },
   {
-    id: "loc-milano-navigli",
-    name: "Navigli Charge",
-    address: "Alzaia Naviglio Grande 12",
-    city: "Milano",
-    country: "IT",
-    coordinates: { latitude: "45.4481", longitude: "9.1762" },
+    id: 'loc-milano-navigli',
+    name: 'Navigli Charge',
+    address: 'Alzaia Naviglio Grande 12',
+    city: 'Milano',
+    country: 'IT',
+    coordinates: { latitude: '45.4481', longitude: '9.1762' },
     evses: [
       {
-        uid: "loc-milano-navigli-evse-1",
-        evse_id: "IT*SIM*E003",
-        status: "CHARGING",
+        uid: 'loc-milano-navigli-evse-1',
+        evse_id: 'IT*SIM*E003',
+        status: 'CHARGING',
         max_power_kw: 50,
-        tariff_id: "tariff-standard",
+        tariff_id: 'tariff-standard',
         connectors: [
           {
-            id: "1",
-            standard: "IEC_62196_T2_COMBO",
-            format: "CABLE",
-            power_type: "DC",
+            id: '1',
+            standard: 'IEC_62196_T2_COMBO',
+            format: 'CABLE',
+            power_type: 'DC',
             max_voltage: 500,
             max_amperage: 125,
           },
         ],
       },
       {
-        uid: "loc-milano-navigli-evse-2",
-        evse_id: "IT*SIM*E004",
-        status: "OUTOFORDER",
+        uid: 'loc-milano-navigli-evse-2',
+        evse_id: 'IT*SIM*E004',
+        status: 'OUTOFORDER',
         max_power_kw: 22,
-        tariff_id: "tariff-economy",
+        tariff_id: 'tariff-economy',
         connectors: [
           {
-            id: "1",
-            standard: "IEC_62196_T2",
-            format: "SOCKET",
-            power_type: "AC_3_PHASE",
+            id: '1',
+            standard: 'IEC_62196_T2',
+            format: 'SOCKET',
+            power_type: 'AC_3_PHASE',
             max_voltage: 400,
             max_amperage: 32,
           },
@@ -133,7 +133,7 @@ const cdrs = new Map<string, OcpiCdr>();
 
 export function isAuthorized(authHeader?: string): boolean {
   if (!authHeader) return false;
-  const token = authHeader.replace(/^Token\s+/i, "").trim();
+  const token = authHeader.replace(/^Token\s+/i, '').trim();
   return token === TOKEN;
 }
 
@@ -162,8 +162,8 @@ export function startSession(input: {
 }): SessionRef {
   const loc = locations.find((l) => l.id === input.locationId);
   const evse = loc?.evses.find((e) => e.uid === input.evseUid);
-  if (!loc || !evse) throw new Error("Location or EVSE not found");
-  if (evse.status !== "AVAILABLE") throw new Error("EVSE not available");
+  if (!loc || !evse) throw new Error('Location or EVSE not found');
+  if (evse.status !== 'AVAILABLE') throw new Error('EVSE not available');
 
   const sessionId = `sess-${Date.now()}`;
   const ref: ActiveSession = {
@@ -175,28 +175,28 @@ export function startSession(input: {
     kWhDelivered: 0,
   };
   sessions.set(sessionId, ref);
-  evse.status = "CHARGING";
+  evse.status = 'CHARGING';
   return { sessionId: ref.sessionId, authorizationReference: ref.authorizationReference };
 }
 
 export function stopSession(sessionId: string): OcpiCdr {
   const session = sessions.get(sessionId);
-  if (!session) throw new Error("Session not found");
+  if (!session) throw new Error('Session not found');
 
   const minutes = Math.max(1, Math.round((Date.now() - session.startedAt.getTime()) / 60000));
   const kWh = Math.max(2, Math.round(minutes * 0.8 * 10) / 10);
   session.kWhDelivered = kWh;
 
-  setEvseStatus(session.evseUid, "AVAILABLE");
+  setEvseStatus(session.evseUid, 'AVAILABLE');
   sessions.delete(sessionId);
 
   const tariff = getTariff(
-    locations
-      .find((l) => l.id === session.locationId)
-      ?.evses.find((e) => e.uid === session.evseUid)?.tariff_id ?? "tariff-standard",
+    locations.find((l) => l.id === session.locationId)?.evses.find((e) => e.uid === session.evseUid)
+      ?.tariff_id ?? 'tariff-standard',
   );
-  const energyRate = tariff?.elements[0]?.price_components.find((c) => c.type === "ENERGY")?.price ?? 0.4;
-  const flat = tariff?.elements[0]?.price_components.find((c) => c.type === "FLAT")?.price ?? 0;
+  const energyRate =
+    tariff?.elements[0]?.price_components.find((c) => c.type === 'ENERGY')?.price ?? 0.4;
+  const flat = tariff?.elements[0]?.price_components.find((c) => c.type === 'FLAT')?.price ?? 0;
   const total = kWh * energyRate + flat;
 
   const cdr: OcpiCdr = {
@@ -205,7 +205,7 @@ export function stopSession(sessionId: string): OcpiCdr {
     total_energy: kWh,
     total_time: minutes * 60,
     total_cost: { excl_vat: total, incl_vat: total * 1.22 },
-    currency: "EUR",
+    currency: 'EUR',
   };
   cdrs.set(sessionId, cdr);
   return cdr;
