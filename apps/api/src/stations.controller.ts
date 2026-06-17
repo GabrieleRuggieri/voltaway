@@ -1,12 +1,10 @@
 import { Controller, Get, Inject, Query } from '@nestjs/common';
-import { computeAllInPrice } from '@voltaway/core';
 import { evses, stations, type Db } from '@voltaway/db';
 import type { OcpiClient } from '@voltaway/ocpi';
 import { eq } from 'drizzle-orm';
 import { DB } from './db.module';
 import { OCPI } from './ocpi.module';
-
-const DEFAULT_FEE = { type: 'flat' as const, value: 0.29 };
+import { quoteFromOcpiTariff } from './pricing';
 
 @Controller('stations')
 export class StationsController {
@@ -46,20 +44,7 @@ export class StationsController {
           let totalEstimate: number | null = null;
 
           if (ocpiTariff) {
-            const components = ocpiTariff.elements.flatMap((e) => e.price_components);
-            const quote = computeAllInPrice({
-              cpoTariff: {
-                id: ocpiTariff.id,
-                currency: ocpiTariff.currency,
-                components: components.map((c) => ({
-                  type: c.type as 'ENERGY' | 'TIME' | 'FLAT' | 'PARKING_TIME',
-                  price: c.price,
-                  stepSize: c.step_size,
-                })),
-              },
-              voltawayFee: DEFAULT_FEE,
-              estimate: { kWh: 20, minutes: 40 },
-            });
+            const quote = quoteFromOcpiTariff(ocpiTariff);
             allInPerKwh = quote.allInPerKwh;
             totalEstimate = quote.totalEstimate;
           }

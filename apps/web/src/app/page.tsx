@@ -1,8 +1,9 @@
 import { StationsMap } from '@/components/StationsMap';
-import { fetchStations, type StationMarker } from '@/lib/api';
+import { StationList } from '@/components/StationList';
+import { fetchStations } from '@/lib/api';
 
 export default async function HomePage() {
-  let stations: StationMarker[] = [];
+  let stations: Awaited<ReturnType<typeof fetchStations>> = [];
   let error: string | null = null;
 
   try {
@@ -26,25 +27,7 @@ export default async function HomePage() {
 
       {error ? <div className="error">{error}</div> : <StationsMap stations={stations} />}
 
-      <section className="list">
-        {stations.map((s) => (
-          <article key={s.id} className="card">
-            <h2>{s.name}</h2>
-            <p>
-              {s.address}, {s.city}
-            </p>
-            <p>
-              {s.maxPowerKw} kW · {s.status}
-              {s.allInPerKwh != null && (
-                <>
-                  {' '}
-                  · <strong>€{s.allInPerKwh.toFixed(2)}/kWh all-in</strong>
-                </>
-              )}
-            </p>
-          </article>
-        ))}
-      </section>
+      <StationList stations={stations} />
     </main>
   );
 }

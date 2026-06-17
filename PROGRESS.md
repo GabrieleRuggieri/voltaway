@@ -2,7 +2,7 @@
 
 File di **controllo del lavoro svolto** e dello **stato del progetto**. Aggiornarlo a ogni sessione significativa.
 
-**Ultimo aggiornamento:** 2026-06-16
+**Ultimo aggiornamento:** 2026-06-16 (sessioni ricarica)
 
 ---
 
@@ -42,13 +42,14 @@ feature/*  →  develop  →  main
 | `packages/ocpi` | ✅ | tipi + `OcpiClient` |
 | `packages/db` | ✅ | schema Drizzle + migrazione `0000_init.sql` |
 | `apps/ocpi-sim` | ✅ | simulatore OCPI 2.2.1 (Milano seed) |
-| `apps/api` | ✅ | NestJS: `/health`, `/stations`, seed+migrate all'avvio |
+| `apps/api` | ✅ | NestJS: `/health`, `/stations`, `/sessions` (start/stop), seed+migrate all'avvio |
 | `apps/worker` | ✅ | sync disponibilità periodico → API |
-| `apps/web` | ✅ | Next.js mappa MapLibre + lista prezzi all-in |
+| `apps/web` | ✅ | Next.js mappa MapLibre + lista stazioni + avvio/stop ricarica demo |
 | Build locale (`pnpm build`) | ✅ | tutti i package/app compilano |
 | Docker `profile app` | ⏳ | da verificare con Docker Desktop avviato |
 | CI GitHub Actions | ⏳ | |
-| Sessioni ricarica + Stripe | ⏳ | prossima milestone |
+| Sessioni ricarica (OCPI, no Stripe) | ✅ | `POST /sessions`, `POST /sessions/:id/stop`, quote persistita |
+| Integrazione Stripe test mode | ⏳ | prossima milestone |
 | Mobile | ⏳ | fuori scope |
 
 ---
@@ -81,6 +82,22 @@ pnpm --filter @voltaway/core test   # 2 passed
 pnpm build                          # tutti i package OK
 ```
 
+### 2026-06-16 — Sessioni ricarica (`feature/scaffold-monorepo`)
+
+- **`POST /sessions`**: quote all-in persistita, avvio OCPI `START_SESSION`, stato `ACTIVE`
+- **`POST /sessions/:id/stop`**: stop OCPI, ingestione CDR, totale finale (CPO + fee Voltaway)
+- **`GET /sessions/:id`**: dettaglio sessione
+- Migrazione `0001_sessions_settlement.sql` (`final_kwh`, `final_total`, `failure_reason`)
+- Web: pulsanti **Avvia ricarica** / **Ferma ricarica** con pannello sessione live
+- Stripe e auth **non ancora** inclusi (flusso demo senza pagamento)
+
+**Verifica locale eseguita:**
+```bash
+pnpm install
+pnpm --filter @voltaway/core test   # 2 passed
+pnpm build                          # tutti i package OK
+```
+
 **Verifica Docker (da fare con Docker avviato):**
 ```bash
 cp .env.example .env
@@ -97,7 +114,7 @@ docker compose --profile app up -d --build
 
 - [ ] Verificare `docker compose --profile app up -d --build` con Docker Desktop
 - [ ] Merge `feature/scaffold-monorepo` → `develop`
-- [ ] `POST /sessions` — avvio/stop ricarica via OCPI + quote persistita
+- [x] `POST /sessions` — avvio/stop ricarica via OCPI + quote persistita
 - [ ] Integrazione Stripe test mode (SetupIntent / PaymentIntent)
 - [ ] WebSocket stato sessione live
 - [ ] CI GitHub Actions (build + test)
