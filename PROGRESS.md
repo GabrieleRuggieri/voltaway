@@ -6,15 +6,18 @@
 
 ## Branching e workflow Git
 
-| Branch | Scopo |
-|---|---|
-| `main` | Stabile / rilasciabile |
-| `develop` | Integrazione |
-| `feature/scaffold-monorepo` | Monorepo + demo E2E |
+| Branch | Scopo | Stato |
+|---|---|---|
+| `main` | Stabile / rilasciabile | attuale @ architettura Docker |
+| `develop` | Integrazione | **branch base per nuovo lavoro** |
+| `feature/scaffold-monorepo` | Monorepo + demo E2E | ✅ mergiato in `develop` |
+| `feature/mobile-map-ui` | UI mobile-first stile EasyPark | in corso |
 
 ```text
 feature/*  →  develop  →  main
 ```
+
+**Regola:** non continuare su feature già mergiate. Dopo il merge, nuovo lavoro = nuovo `feature/*` da `develop`.
 
 ---
 

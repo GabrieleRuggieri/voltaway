@@ -1,5 +1,5 @@
-import { HomeClient } from '@/components/HomeClient';
+import { MapScreen } from '@/components/map/MapScreen';
 
 export default function HomePage() {
-  return <HomeClient />;
+  return <MapScreen />;
 }

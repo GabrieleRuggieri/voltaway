@@ -8,11 +8,23 @@ import type { StationMarker } from '@/lib/api';
 const TILES =
   process.env.NEXT_PUBLIC_MAP_TILES_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-export function StationsMap({ stations }: { stations: StationMarker[] }) {
+const MILAN_CENTER: [number, number] = [9.19, 45.46];
+
+export function StationsMap({
+  stations,
+  selectedUid,
+  onSelect,
+}: {
+  stations: StationMarker[];
+  selectedUid?: string;
+  onSelect?: (station: StationMarker) => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || mapRef.current) return;
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -23,38 +35,68 @@ export function StationsMap({ stations }: { stations: StationMarker[] }) {
             type: 'raster',
             tiles: [TILES],
             tileSize: 256,
-            attribution: '© OpenStreetMap contributors',
+            attribution: '© OpenStreetMap',
           },
         },
         layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
       },
-      center: stations[0] ? [stations[0].longitude, stations[0].latitude] : [9.19, 45.46],
-      zoom: 12,
+      center: stations[0] ? [stations[0].longitude, stations[0].latitude] : MILAN_CENTER,
+      zoom: 13,
+      attributionControl: false,
     });
 
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    mapRef.current = map;
+
+    return () => {
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+
     for (const station of stations) {
-      const el = document.createElement('div');
-      el.className = 'station-marker';
-      el.innerHTML = station.allInPerKwh
-        ? `€${station.allInPerKwh.toFixed(2)}/kWh`
-        : station.status;
+      const isSelected = station.ocpiEvseUid === selectedUid;
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = `map-pin${isSelected ? ' map-pin--selected' : ''}`;
+      el.innerHTML =
+        station.allInPerKwh != null
+          ? `<span class="map-pin-price">€${station.allInPerKwh.toFixed(2)}</span>`
+          : `<span class="map-pin-status">${station.status.slice(0, 3)}</span>`;
 
-      new maplibregl.Marker({ element: el })
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onSelect?.(station);
+        map.flyTo({
+          center: [station.longitude, station.latitude],
+          zoom: 15,
+          duration: 800,
+        });
+      });
+
+      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([station.longitude, station.latitude])
-        .setPopup(
-          new maplibregl.Popup({ offset: 16 }).setHTML(
-            `<strong>${station.name}</strong><br/>${station.address}, ${station.city}<br/>` +
-              `${station.maxPowerKw} kW · ${station.status}` +
-              (station.allInPerKwh
-                ? `<br/><b>€${station.allInPerKwh.toFixed(2)}/kWh all-in</b>`
-                : ''),
-          ),
-        )
         .addTo(map);
+
+      markersRef.current.push(marker);
     }
+  }, [stations, selectedUid, onSelect]);
 
-    return () => map.remove();
-  }, [stations]);
+  useEffect(() => {
+    const station = stations.find((s) => s.ocpiEvseUid === selectedUid);
+    const map = mapRef.current;
+    if (!station || !map) return;
+    map.flyTo({ center: [station.longitude, station.latitude], zoom: 15, duration: 600 });
+  }, [selectedUid, stations]);
 
-  return <div ref={containerRef} className="map" />;
+  return <div ref={containerRef} className="map-fullscreen" />;
 }
